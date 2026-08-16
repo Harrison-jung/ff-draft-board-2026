@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fantasy Football Draft Board 2026 — .5 PPR</title>
+<style>
+  :root {
+    --espn-dark: #0b1117;
+    --espn-navy: #17252a;
+    --espn-teal: #006778;
+    --espn-teal-light: #3aafa9;
+    --espn-red: #d00000;
+    --espn-orange: #ff6b00;
+    --espn-gold: #ffc72c;
+    --espn-white: #f0f4f5;
+    --espn-gray: #2b3a42;
+    --espn-mid: #3d5a63;
+    --espn-border: #1e3340;
+    --rb: #1a936f;
+    --wr: #2176ff;
+    --qb: #c1121f;
+    --te: #f77f00;
+    --round-banner: #004c54;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background: var(--espn-dark);
+    color: var(--espn-white);
+    min-height: 100vh;
+  }
+
+  /* ── SYNC STATUS BAR ── */
+  .sync-bar {
+    background: var(--espn-dark);
+    padding: 4px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11px;
+    border-bottom: 1px solid var(--espn-border);
+  }
+  .sync-status { display: flex; align-items: center; gap: 6px; }
+  .sync-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    display: inline-block;
+  }
+  .sync-dot.connected { background: #4caf50; }
+  .sync-dot.disconnected { background: var(--espn-red); }
+  .user-label {
+    background: var(--espn-gray);
+    padding: 2px 10px;
+    border-radius: 10px;
+    font-size: 11px;
+    cursor: pointer;
+  }
+  .users-online { color: var(--espn-teal-light); }
+
+  /* ── SETUP OVERLAY ── */
+  .setup-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.85);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .setup-box {
+    background: var(--espn-navy);
+    border: 2px solid var(--espn-teal);
+    border-radius: 8px;
+    padding: 32px;
+    max-width: 520px;
+    width: 90%;
+  }
+  .setup-box h2 {
+    color: var(--espn-teal-light);
+    margin-bottom: 16px;
+    font-size: 20px;
+  }
+  .setup-box p {
+    color: var(--espn-white);
+    font-size: 13px;
+    line-height: 1.5;
+    margin-bottom: 12px;
+  }
+  .setup-box label {
+    display: block;
+    font-size: 12px;
+    color: var(--espn-teal-light);
+    margin-bottom: 4px;
+    margin-top: 12px;
+  }
+  .setup-box input, .setup-box textarea {
+    width: 100%;
+    background: var(--espn-gray);
+    border: 1px solid var(--espn-border);
+    color: var(--espn-white);
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-family: monospace;
+  }
+  .setup-box textarea { height: 120px; resize: vertical; }
+  .setup-box button {
+    margin-top: 16px;
+    background: var(--espn-red);
+    color: #fff;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 700;
+    width: 100%;
+  }
+  .setup-box button:hover { opacity: .85; }
+  .setup-error { color: var(--espn-red); font-size: 12px; margin-top: 8px; display: none; }
+
+  /* ── HEADER ── */
+  header {
+    background: linear-gradient(135deg, var(--espn-navy), var(--espn-teal));
+    padding: 18px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 3px solid var(--espn-red);
+    position: sticky; top: 0; z-index: 100;
+  }
+  header h1 {
+    font-size: 22px; font-weight: 800; letter-spacing: .5px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  header h1 span.accent { color: var(--espn-red); }
+  .controls {
+    display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+  }
+  .controls input[type=text] {
+    background: var(--espn-gray);
+    border: 1px solid var(--espn-border);
+    color: var(--espn-white);
+    padding: 6px 12px; border-radius: 4px; font-size: 13px; width: 200px;
+  }
+  .controls select {
+    background: var(--espn-gray);
+    border: 1px solid var(--espn-border);
+    color: var(--espn-white);
+    padding: 6px 8px; border-radius: 4px; font-size: 13px;
+  }
+  .controls button {
+    background: var(--espn-red); color: #fff; border: none;
+    padding: 6px 14px; border-radius: 4px; cursor: pointer;
+    font-size: 13px; font-weight: 600;
+  }
+  .controls button:hover { opacity: .85; }
+  .controls button.secondary { background: var(--espn-teal); }
+
+  /* ── TAB BAR ── */
+  .tab-bar {
+    display: flex; background: var(--espn-navy);
+    border-bottom: 2px solid var(--espn-border); padding: 0 24px;
+  }
+  .tab-btn {
+    padding: 10px 24px; font-size: 13px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .6px; border: none;
+    cursor: pointer; background: transparent; color: var(--espn-mid);
+    border-bottom: 3px solid transparent; transition: all .15s;
+  }
+  .tab-btn:hover { color: var(--espn-white); }
+  .tab-btn.active { color: var(--espn-white); border-bottom-color: var(--espn-red); }
+  .tab-btn .tab-count {
+    display: inline-block; background: var(--espn-red); color: #fff;
+    font-size: 10px; font-weight: 800; padding: 1px 6px;
+    border-radius: 8px; margin-left: 6px; min-width: 18px; text-align: center;
+  }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ── LEGEND ── */
+  .legend {
+    display: flex; gap: 16px; padding: 8px 24px; font-size: 11px;
+    background: var(--espn-navy); border-bottom: 1px solid var(--espn-border);
+    flex-wrap: wrap; align-items: center;
+  }
+  .legend-item { display: flex; align-items: center; gap: 5px; }
+  .legend-swatch { width: 12px; height: 12px; border-radius: 2px; display: inline-block; }
+
+  /* ── TABLE ── */
+  .board-wrap { overflow-x: auto; padding: 12px; }
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; min-width: 1600px; }
+  thead th {
+    background: var(--espn-navy); color: var(--espn-teal-light);
+    padding: 8px 6px; text-align: left; font-weight: 700; font-size: 11px;
+    text-transform: uppercase; letter-spacing: .4px;
+    position: sticky; top: 58px; z-index: 50;
+    border-bottom: 2px solid var(--espn-teal); white-space: nowrap;
+  }
+  tbody tr {
+    border-bottom: 1px solid var(--espn-border); transition: background .15s; cursor: grab;
+  }
+  tbody tr:hover { background: rgba(58,175,169,.08); }
+  tbody tr.dragging { opacity: .4; }
+  tbody tr.drag-over { border-top: 2px solid var(--espn-gold); }
+  tbody td { padding: 6px 6px; vertical-align: middle; white-space: nowrap; }
+  td.rank-cell {
+    font-weight: 800; color: var(--espn-teal-light); text-align: center;
+    width: 36px; font-size: 13px;
+  }
+  td.player-name { font-weight: 700; min-width: 150px; white-space: nowrap; }
+  .pos-badge {
+    display: inline-block; padding: 2px 7px; border-radius: 3px;
+    font-weight: 700; font-size: 11px; color: #fff; text-align: center; min-width: 30px;
+  }
+  .pos-RB { background: var(--rb); }
+  .pos-WR { background: var(--wr); }
+  .pos-QB { background: var(--qb); }
+  .pos-TE { background: var(--te); }
+  .round-row td {
+    background: var(--round-banner) !important; color: var(--espn-gold);
+    font-weight: 800; font-size: 13px; text-transform: uppercase;
+    letter-spacing: 1px; padding: 10px 8px; border: none; cursor: default;
+  }
+  td[contenteditable=true] { cursor: text; border-radius: 2px; padding: 4px 6px; }
+  td[contenteditable=true]:focus {
+    outline: 2px solid var(--espn-teal-light); background: rgba(58,175,169,.12);
+  }
+  .flag-cell { text-align: center; }
+  .flag-btn {
+    background: transparent; border: 1.5px solid var(--espn-mid);
+    border-radius: 3px; cursor: pointer; font-size: 14px;
+    width: 28px; height: 28px;
+    display: inline-flex; align-items: center; justify-content: center;
+    transition: all .15s;
+  }
+  .flag-btn.active-breakout { background: var(--espn-teal-light); border-color: var(--espn-teal-light); color: #000; }
+  .flag-btn.active-bust { background: var(--espn-red); border-color: var(--espn-red); color: #fff; }
+  .flag-btn.active-injury { background: #ff9800; border-color: #ff9800; color: #000; }
+  .injury-notes-cell {
+    max-width: 180px; min-width: 120px; white-space: normal;
+    font-size: 11px; line-height: 1.35; color: #ff9800;
+    cursor: text; border-radius: 2px; padding: 4px 6px;
+  }
+  .injury-notes-cell:empty { color: var(--espn-mid); }
+  .injury-notes-cell:empty::before { content: '—'; color: var(--espn-mid); }
+  .injury-notes-cell:focus { outline: 2px solid #ff9800; background: rgba(255,152,0,.08); }
+  .move-btns { display: flex; flex-direction: column; gap: 2px; }
+  .move-btns button {
+    background: var(--espn-gray); border: 1px solid var(--espn-border);
+    color: var(--espn-teal-light); font-size: 10px; cursor: pointer;
+    padding: 1px 5px; border-radius: 2px; line-height: 1.2;
+  }
+  .move-btns button:hover { background: var(--espn-teal); color: #fff; }
+  td.pros-cell, td.cons-cell {
+    max-width: 220px; white-space: normal; font-size: 11.5px; line-height: 1.4;
+  }
+  .vegas-rank { font-weight: 700; }
+  .vegas-top { color: var(--espn-teal-light); }
+  .vegas-mid { color: var(--espn-gold); }
+  .vegas-bot { color: var(--espn-red); }
+  .source-tag { font-size: 9px; color: var(--espn-teal-light); opacity: .7; }
+
+  /* ── MY BOARD TAB ── */
+  .my-board-wrap { padding: 12px; }
+  .my-board-wrap table { width: 100%; border-collapse: collapse; font-size: 12.5px; min-width: 1100px; }
+  .my-board-wrap thead th {
+    background: var(--espn-navy); color: var(--espn-teal-light);
+    padding: 8px 6px; text-align: left; font-weight: 700; font-size: 11px;
+    text-transform: uppercase; letter-spacing: .4px;
+    border-bottom: 2px solid var(--espn-teal); white-space: nowrap;
+  }
+  .my-board-wrap tbody td {
+    padding: 6px 6px; vertical-align: middle; border-bottom: 1px solid var(--espn-border);
+  }
+  .my-board-round td {
+    background: var(--round-banner) !important; color: var(--espn-gold);
+    font-weight: 800; font-size: 13px; text-transform: uppercase;
+    letter-spacing: 1px; padding: 10px 8px; border: none;
+  }
+  .my-board-empty {
+    text-align: center; padding: 60px 20px; color: var(--espn-mid); font-size: 15px;
+  }
+  .my-board-empty .big-icon { font-size: 48px; display: block; margin-bottom: 12px; }
+  .remove-btn {
+    background: var(--espn-gray); border: 1px solid var(--espn-border);
+    color: var(--espn-red); font-size: 12px; cursor: pointer;
+    padding: 3px 8px; border-radius: 3px;
+  }
+  .remove-btn:hover { background: var(--espn-red); color: #fff; }
+
+  @media (max-width: 900px) {
+    header { flex-direction: column; gap: 8px; }
+    header h1 { font-size: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ════ SETUP OVERLAY ════ -->
+<div class="setup-overlay" id="setupOverlay">
+  <div class="setup-box">
+    <h2>🏈 Connect Your Draft Board</h2>
+    <p>Paste your Firebase config below. You'll find it in the
+      <strong>Firebase Console → Project Settings → General → Your apps → SDK setup</strong>.<br>
+      Copy the <code>firebaseConfig</code> object.</p>
+    <label>Firebase Config (JSON)</label>
+    <textarea id="configInput" placeholder='{
+  "apiKey": "AIza...",
+  "authDomain": "your-project.firebaseapp.com",
+  "databaseURL": "https://your-project-default-rtdb.firebaseio.com",
+  "projectId": "your-project",
+  "storageBucket": "your-project.appspot.com",
+  "messagingSenderId": "123456789",
+  "appId": "1:123:web:abc123"
+}'></textarea>
+    <label>Your Name</label>
+    <input type="text" id="nameInput" placeholder="e.g., Mike" value="">
+    <div class="setup-error" id="setupError">Invalid config. Make sure it's valid JSON with apiKey and databaseURL.</div>
+    <button onclick="connectFirebase()">🔌 Connect &amp; Launch</button>
+    <p style="margin-top:16px;font-size:11px;opacity:.5;">Config is saved in your browser's localStorage so you don't have to paste it again.</p>
+  </div>
+</div>
+
+<!-- ════ SYNC BAR ════ -->
+<div class="sync-bar" id="syncBar" style="display:none;">
+  <div class="sync-status">
+    <span class="sync-dot" id="syncDot"></span>
+    <span id="syncText">Connecting...</span>
+    <span class="users-online" id="usersOnline"></span>
+  </div>
+  <span class="user-label" id="userLabel" onclick="changeName()" title="Click to change name"></span>
+</div>
+
+<!-- ════ HEADER ════ -->
+<header id="mainHeader" style="display:none;">
+  <h1>🏈 2026 <span class="accent">Fantasy Draft Board</span> — .5 PPR</h1>
+  <div class="controls">
+    <input type="text" id="searchBox" placeholder="Search player…" oninput="filterPlayers()">
+    <select id="posFilter" onchange="filterPlayers()">
+      <option value="">All Positions</option>
+      <option value="QB">QB</option>
+      <option value="RB">RB</option>
+      <option value="WR">WR</option>
+      <option value="TE">TE</option>
+    </select>
+    <button class="secondary" onclick="resetBoard()">Reset Board</button>
+    <button onclick="exportBoard()">Export JSON</button>
+    <button style="background:var(--espn-gold);color:#000;" onclick="saveHTML()">💾 Save HTML</button>
+  </div>
+</header>
+<div class="legend" id="mainLegend" style="display:none;">
+  <span style="font-weight:700;color:var(--espn-gold);">POSITIONS:</span>
+  <span class="legend-item"><span class="legend-swatch" style="background:var(--qb)"></span>QB</span>
+  <span class="legend-item"><span class="legend-swatch" style="background:var(--rb)"></span>RB</span>
+  <span class="legend-item"><span class="legend-swatch" style="background:var(--wr)"></span>WR</span>
+  <span class="legend-item"><span class="legend-swatch" style="background:var(--te)"></span>TE</span>
+  <span style="margin-left:20px;font-weight:700;color:var(--espn-gold);">FLAGS:</span>
+  <span class="legend-item">🚀 = Target</span>
+  <span class="legend-item">💣 = Bust</span>
+  <span class="legend-item">🏥 = Injury</span>
+  <span style="margin-left:20px;font-size:10px;opacity:.6;">All changes sync live · Click cells to edit · Drag rows to reorder</span>
+</div>
+<div class="tab-bar" id="mainTabs" style="display:none;">
+  <button class="tab-btn active" onclick="switchTab('research')">📋 Research Board</button>
+  <button class="tab-btn" onclick="switchTab('myboard')">🚀 My Draft Board <span class="tab-count" id="myBoardCount">0</span></button>
+</div>
+
+<!-- ════ RESEARCH BOARD TAB ════ -->
+<div id="panel-research" class="tab-panel active">
+<div class="board-wrap">
+<table id="draftTable">
+<thead>
+<tr>
+  <th style="width:30px">#</th>
+  <th style="width:50px">Move</th>
+  <th>Player</th>
+  <th>Team</th>
+  <th>Pos</th>
+  <th>Age</th>
+  <th>Ht</th>
+  <th>Wt</th>
+  <th>40</th>
+  <th>🚀</th>
+  <th>💣</th>
+  <th>🏥</th>
+  <th>Injury Notes</th>
+  <th>Pros <span class="source-tag">(Hayden/Josh)</span></th>
+  <th>Cons <span class="source-tag">(Hayden/Josh)</span></th>
+  <th>ESPN ADP (PPR)</th>
+  <th>Hayden Rk</th>
+  <th>Vegas Tm</th>
+</tr>
+</thead>
+<tbody id="boardBody"></tbody>
+</table>
+</div>
+</div>
+
+<!-- ════ MY DRAFT BOARD TAB ════ -->
+<div id="panel-myboard" class="tab-panel">
+<div class="my-board-wrap">
+  <div id="myBoardContent"></div>
+</div>
+</div>
+
+<!-- ════ FIREBASE SDK ════ -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+
+<script>
+// ══════════════════════════════════════════════
+//  PLAYER DATA (default seed)
+// ══════════════════════════════════════════════
+const vegasRank = {DET:1,CIN:2,BAL:3,LAR:4,DAL:5,BUF:6,SF:7,GB:8,SEA:9,CHI:10,KC:11,PHI:12,NE:13,LAC:14,TB:15,IND:16,WAS:17,JAX:18,HOU:19,MIN:20,DEN:21,NYG:22,NO:23,PIT:24,ATL:25,TEN:26,CAR:27,LV:28,MIA:29,CLE:30,ARI:31,NYJ:32};
+
+const defaultPlayers = [
+{name:"Jahmyr Gibbs",team:"DET",pos:"RB",age:"23.3",ht:"5-11",wt:"200",forty:"4.36",pros:"Finished 4th overall in FPPG; averaged 25.1 hPPR pts w/o Montgomery; elite efficiency chart (Hayden). Career-high volume expected with Pacheco in small role (Josh).",cons:"New OC Drew Petzig unproven at this level; Pacheco could steal some GL work (Hayden). Lions may ease up in wins, capping upside in blowouts (Josh).",espn:1.0,hayden:1,breakout:false,bust:false,injury:""},
+{name:"Bijan Robinson",team:"ATL",pos:"RB",age:"23.9",ht:"5-11",wt:"215",forty:"4.46",pros:"Elite RB talent with league-best opportunity; Falcons project top-10 offense (Hayden). Massive TD upside if red-zone usage ticks up (Josh).",cons:"QB play from Tua/Penix could limit offense ceiling (Hayden). Brian Robinson backup signed; ATL ranked 25th in Vegas scoring (Josh).",espn:2.0,hayden:2,breakout:false,bust:false,injury:""},
+{name:"Puka Nacua",team:"LAR",pos:"WR",age:"24.2",ht:"6-2",wt:"212",forty:"4.52",pros:"Top-5 fantasy pick potential; Rams #1 in Vegas implied scoring (Hayden). Historic target share; Stafford loves him deep and short (Josh).",cons:"Davante Adams arrival could reduce targets slightly (Hayden). Heavy first-round cost for a WR who has only 1.5 full seasons (Josh).",espn:3.0,hayden:3,breakout:false,bust:false,injury:""},
+{name:"Ja'Marr Chase",team:"CIN",pos:"WR",age:"26.4",ht:"6-1",wt:"201",forty:"4.38",pros:"Highest floor among WRs on a Super Bowl contender; Bengals #2 in Vegas scoring (Hayden). Burrow healthy + improved OL = monster ceiling (Josh).",cons:"Cost is steep—needs a top-3 WR finish to return value (Hayden). Bengals defense still questionable, may face negative game scripts (Josh).",espn:4.0,hayden:4,breakout:false,bust:false,injury:""},
+{name:"Jaxon Smith-Njigba",team:"SEA",pos:"WR",age:"23.7",ht:"6-1",wt:"196",forty:"4.49",pros:"WR2 overall on WR7 usage last year; 35% target share dwarfed field (Hayden). 99.6 rec yd/gm including playoffs, elite route-runner (Josh).",cons:"Seahawks ranked 9th in Vegas scoring—not elite (Hayden). Heavy target share may regress with Sam Darnold feeding other mouths (Josh).",espn:5.0,hayden:5,breakout:false,bust:false,injury:""},
+{name:"Jonathan Taylor",team:"IND",pos:"RB",age:"27.5",ht:"5-10",wt:"226",forty:"4.39",pros:"Workhorse role locked in; Colts retooled weapons around him (Josh). High-volume runner in a run-first scheme; GL hammer (Hayden).",cons:"Age 27 entering decline window for RBs (Hayden). Colts 16th in Vegas scoring; offense may struggle (Josh).",espn:7.0,hayden:7,breakout:false,bust:false,injury:""},
+{name:"Christian McCaffrey",team:"SF",pos:"RB",age:"30.3",ht:"5-11",wt:"205",forty:"4.48",pros:"Shanahan system maximizes his receiving; SF 7th in Vegas scoring (Hayden). 13 games of 19 touches/gm is worth a 1st-round pick (Hayden).",cons:"Per-game usage expected to drop from 23.7 to ~19-20 touches (Hayden). Age 30 with injury history; Kaelon Black added as depth (Josh).",espn:6.0,hayden:6,breakout:false,bust:false,injury:"Muscle tightness in camp; played through similar in 2025"},
+{name:"Amon-Ra St. Brown",team:"DET",pos:"WR",age:"26.9",ht:"6-0",wt:"195",forty:"4.51",pros:"Lions #1 in Vegas scoring; elite slot role in high-powered offense (Josh). Consistent WR1 with massive floor (Hayden).",cons:"Jameson Williams emerging could reduce share (Hayden). New OC Petzig may shift offensive balance (Josh).",espn:8.0,hayden:8,breakout:false,bust:false,injury:""},
+{name:"Drake London",team:"ATL",pos:"WR",age:"24.8",ht:"6-4",wt:"213",forty:"4.53",pros:"Massive target share comparable to elite WRs; physical dominance (Hayden). Top-10 talent at position (Josh).",cons:"Tua/Penix QB situation creates volatility (Hayden/Josh). ATL 25th in Vegas scoring hurts ceiling (Josh).",espn:15.0,hayden:9,breakout:false,bust:false,injury:""},
+{name:"Derrick Henry",team:"BAL",pos:"RB",age:"32.6",ht:"6-3",wt:"247",forty:"4.54",pros:"Ravens #3 in Vegas scoring; rushing offense elite (Hayden). Defied age last year, still a TD machine (Josh).",cons:"Age 32—cliff risk is very real (Hayden/Josh). Lamar's rushing cuts into Henry's ceiling (Josh).",espn:18.0,hayden:12,breakout:false,bust:false,injury:""},
+{name:"James Cook",team:"BUF",pos:"RB",age:"25.2",ht:"5-11",wt:"199",forty:"4.42",pros:"Bills 2nd in projected playoff scoring; RB depth chart unchanged (Hayden). HC Joe Brady promoted, offense should feel identical (Hayden).",cons:"5 of his TDs came from outside 20-yds—regression candidate (Hayden). DJ Moore + healthier Kincaid could steal targets (Josh).",espn:12.0,hayden:11,breakout:false,bust:false,injury:""},
+{name:"De'Von Achane",team:"MIA",pos:"RB",age:"23.6",ht:"5-9",wt:"188",forty:"4.32",pros:"Fastest player in the league; electric in space (Josh). Elite big-play ability from anywhere on field (Hayden).",cons:"Dolphins 29th in Vegas scoring—terrible situation (Hayden/Josh). Injury history at small frame is concerning (Josh).",espn:11.0,hayden:14,breakout:false,bust:false,injury:""},
+{name:"CeeDee Lamb",team:"DAL",pos:"WR",age:"27.4",ht:"6-2",wt:"198",forty:"4.50",pros:"Cowboys 5th in Vegas scoring; Dak reunited and healthy (Josh). Target monster with elite route-running (Hayden).",cons:"George Pickens now in DAL may steal some targets (Hayden). Slight injury concern with hamstring history (Josh).",espn:9.0,hayden:10,breakout:false,bust:false,injury:""},
+{name:"Rashee Rice",team:"KC",pos:"WR",age:"24.8",ht:"6-1",wt:"204",forty:"4.51",pros:"Mahomes' alpha WR target; Chiefs 11th in scoring (Josh). Showed WR1 upside when healthy last year (Hayden).",cons:"Coming off knee injury—durability question (Hayden/Josh). Kenneth Walker arrival could shift KC more run-heavy (Josh).",espn:19.0,hayden:13,breakout:false,bust:false,injury:""},
+{name:"Justin Jefferson",team:"MIN",pos:"WR",age:"27.0",ht:"6-1",wt:"195",forty:"4.43",pros:"Generational talent; still elite route-runner (Josh). Floor is WR1 when healthy (Hayden).",cons:"Vikings 20th in Vegas scoring; new QB situation with Kyler Murray (Hayden). Vikings may lean run-heavy with Aaron Jones (Josh).",espn:10.0,hayden:15,breakout:false,bust:false,injury:""},
+{name:"Ashton Jeanty",team:"LV",pos:"RB",age:"21.9",ht:"5-9",wt:"211",forty:"4.47",pros:"Exceptional at forcing missed tackles in space (0.29 per carry vs 0.16 avg) (Hayden). RB9 in receptions per game as rookie (Hayden).",cons:"RB16 on RB11 usage; RB23 in rushing yards—inefficient rookie year (Hayden). Raiders 28th in Vegas scoring; LV offense is awful (Josh).",espn:14.0,hayden:16,breakout:false,bust:false,injury:""},
+{name:"Chase Brown",team:"CIN",pos:"RB",age:"25.0",ht:"5-9",wt:"205",forty:"4.49",pros:"Bengals #2 in Vegas scoring; locked-in starter (Josh). Young, explosive back in a high-powered offense (Hayden).",cons:"Zack Moss gone but workload durability unknown (Hayden). May lose passing-down work (Josh).",espn:24.0,hayden:17,breakout:false,bust:false,injury:""},
+{name:"Saquon Barkley",team:"PHI",pos:"RB",age:"29.4",ht:"6-0",wt:"233",forty:"4.40",pros:"Eagles 12th in scoring; dominant runner in RPO scheme (Josh). Historic 2024 season showed he still has elite juice (Hayden).",cons:"Age 29 coming off a 400+ touch season—heavy mileage (Hayden/Josh). Regression to mean after career year likely (Josh).",espn:13.0,hayden:18,breakout:false,bust:false,injury:""},
+{name:"A.J. Brown",team:"NE",pos:"WR",age:"29.1",ht:"6-1",wt:"226",forty:"4.49",pros:"Patriots 13th in Vegas scoring; OC McDaniels had wild seasons with Davante Adams (Hayden). Maye connection could unlock massive volume (Josh).",cons:"Hamstring/injury history creates risk (Hayden). New team chemistry still developing (Josh).",espn:25.0,hayden:19,breakout:false,bust:false,injury:""},
+{name:"George Pickens",team:"DAL",pos:"WR",age:"24.1",ht:"6-3",wt:"200",forty:"4.47",pros:"Massive talent; DAL 5th in Vegas scoring with Dak (Josh). Physical freak with contested-catch dominance (Hayden).",cons:"Attitude/effort concerns have followed him (Hayden/Josh). WR2 behind CeeDee Lamb in target pecking order (Josh).",espn:27.0,hayden:20,breakout:false,bust:false,injury:""},
+{name:"Omarion Hampton",team:"LAC",pos:"RB",age:"22.5",ht:"6-0",wt:"220",forty:"4.42",pros:"Young workhorse; LAC 14th in Vegas scoring (Hayden). Jim Harbaugh loves a bell-cow back (Josh).",cons:"Rookie learning curve still possible in year 2 (Hayden). Chargers offense pass-first with Herbert (Josh).",espn:21.0,hayden:21,breakout:false,bust:false,injury:""},
+{name:"Nico Collins",team:"HOU",pos:"WR",age:"26.2",ht:"6-4",wt:"215",forty:"4.45",pros:"Elite and Stroud too talented to ignore; 19 RZ targets (Hayden). Size/speed combo is rare (Josh).",cons:"Houston OL and coaching staff deeply worry me (Hayden). Texans 19th in Vegas scoring (Josh).",espn:26.0,hayden:22,breakout:false,bust:false,injury:""},
+{name:"Chris Olave",team:"NO",pos:"WR",age:"25.2",ht:"6-1",wt:"189",forty:"4.39",pros:"Elite separation wins; Saints ran fastest pace in NFL (Hayden). Route-running savant with deep speed (Josh).",cons:"Major concussion history is primary downside (Hayden). Saints 23rd in Vegas scoring; QB play uncertain (Josh).",espn:29.0,hayden:23,breakout:false,bust:false,injury:"Concussion history (ongoing); no new camp injury"},
+{name:"Josh Jacobs",team:"GB",pos:"RB",age:"28.4",ht:"5-10",wt:"220",forty:"4.60",pros:"Packers 8th in Vegas scoring; proven volume back (Josh). Consistent RB1 floor in a great offense (Hayden).",cons:"Age 28; may lose more work to younger backs (Hayden). Not an explosive athlete—volume-dependent (Josh).",espn:28.0,hayden:24,breakout:false,bust:false,injury:"Groin injury; out at least a week"},
+{name:"Zay Flowers",team:"BAL",pos:"WR",age:"24.3",ht:"5-9",wt:"182",forty:"4.42",pros:"Ravens #3 in scoring; new OC Declan Doyle may boost RZ targets (Hayden/Josh). Electric after the catch (Hayden).",cons:"Small frame limits contested-catch ability (Josh). Lamar's rushing limits overall passing volume (Hayden).",espn:38.0,hayden:25,breakout:false,bust:false,injury:""},
+{name:"Kenneth Walker",team:"KC",pos:"RB",age:"25.4",ht:"5-9",wt:"211",forty:"4.38",pros:"Chiefs 11th in scoring; takes over Pacheco's role (Josh). Explosive runner, proven NFL starter (Hayden).",cons:"Sharing time in KC system unclear (Hayden). Injury history in Seattle was a concern (Josh).",espn:23.0,hayden:26,breakout:false,bust:false,injury:""},
+{name:"Josh Allen",team:"BUF",pos:"QB",age:"30.2",ht:"6-5",wt:"237",forty:"4.75",pros:"Bills 6th in Vegas scoring; rushing floor gives massive QB advantage (Hayden). DJ Moore addition improves weapons (Hayden).",cons:"Overall finishes have been inconsistent: 30th, 18th, 30th, 19th in FPPG (Hayden). OL getting older, OL coach departed (Josh).",espn:20.0,hayden:27,breakout:false,bust:false,injury:"Shin bruise from camp collision; nothing torn"},
+{name:"Breece Hall",team:"NYJ",pos:"RB",age:"24.5",ht:"6-1",wt:"220",forty:"4.39",pros:"Talent is undeniable; dual-threat back (Josh). Jets 32nd in Vegas but talent alone can produce (Hayden).",cons:"Jets 32nd in Vegas implied scoring—worst in NFL (Hayden/Josh). New offensive system questions (Josh).",espn:31.0,hayden:28,breakout:false,bust:false,injury:""},
+{name:"Malik Nabers",team:"NYG",pos:"WR",age:"22.0",ht:"6-0",wt:"200",forty:"4.35",pros:"Electric playmaker; Jaxson Dart adds a new dynamic at QB (Josh). Giants 22nd in scoring but Nabers is matchup-proof (Hayden).",cons:"Giants offense ranked 22nd by Vegas (Hayden). Dart is a rookie QB—growing pains expected (Josh).",espn:32.0,hayden:30,breakout:false,bust:false,injury:"ACL recovery; practicing, on track for Week 1"},
+{name:"Kyren Williams",team:"LAR",pos:"RB",age:"25.5",ht:"5-9",wt:"195",forty:"4.64",pros:"Rams #1 in Vegas implied scoring (Hayden/Josh). Goal-line and receiving back in elite offense (Hayden).",cons:"Blake Corum looms as competition (Hayden). Not the most explosive athlete (Josh).",espn:37.0,hayden:29,breakout:false,bust:false,injury:""},
+{name:"Jeremiyah Love",team:"ARI",pos:"RB",age:"21.2",ht:"5-11",wt:"208",forty:"4.38",pros:"Explosive rookie talent; draft capital invested (Josh). Dynamic runner with receiving chops (Hayden).",cons:"Cardinals 31st in Vegas scoring—terrible situation (Hayden/Josh). Crowded backfield with James Conner and Allgeier (Josh).",espn:16.0,hayden:31,breakout:false,bust:false,injury:""},
+{name:"Garrett Wilson",team:"NYJ",pos:"WR",age:"24.3",ht:"6-0",wt:"192",forty:"4.38",pros:"New OC + bad defense = volume opportunity (Hayden/Josh). Elite route-runner who can win anywhere (Hayden).",cons:"Jets 32nd in Vegas scoring (Hayden/Josh). QB play has been a disaster his whole career (Josh).",espn:30.0,hayden:32,breakout:false,bust:false,injury:""},
+{name:"DeVonta Smith",team:"PHI",pos:"WR",age:"27.6",ht:"6-0",wt:"166",forty:"4.41",pros:"Eagles 12th in scoring; Hurts' top target (Josh). Reliable WR2 with WR1 weeks (Hayden).",cons:"Slim build limits durability ceiling (Hayden). AJ Brown gone opens targets but also defensive focus (Josh).",espn:35.0,hayden:33,breakout:false,bust:false,injury:"Hamstring issue (Aug 4); no long-term concern yet"},
+{name:"Emeka Egbuka",team:"TB",pos:"WR",age:"23.4",ht:"6-1",wt:"205",forty:"4.47",pros:"Bucs 15th in scoring; steps into Chris Godwin role (Josh). Polished route-runner from Day 1 (Hayden).",cons:"Rookie WR—adjustment period expected (Hayden). Baker Mayfield's regression possible (Josh).",espn:40.0,hayden:34,breakout:false,bust:false,injury:""},
+{name:"Cam Skattebo",team:"NYG",pos:"RB",age:"23.8",ht:"5-11",wt:"217",forty:"4.50",pros:"Physical runner with receiving ability; Jaxson Dart helps (Josh). Workhorse potential in NYG (Hayden).",cons:"Giants 22nd in Vegas scoring (Hayden). NFL athleticism may be capped (Josh).",espn:39.0,hayden:36,breakout:false,bust:false,injury:""},
+{name:"Tetairoa McMillan",team:"CAR",pos:"WR",age:"22.1",ht:"6-5",wt:"212",forty:"4.50",pros:"Massive catch radius; dominant at the college level (Josh). Size creates mismatches everywhere (Hayden).",cons:"Panthers 27th in Vegas scoring (Hayden). QB play is a huge question mark (Josh).",espn:36.0,hayden:35,breakout:false,bust:false,injury:""},
+{name:"Javonte Williams",team:"DAL",pos:"RB",age:"26.3",ht:"5-10",wt:"220",forty:"4.55",pros:"DAL 5th in Vegas scoring; doesn't need to be good to matter in fantasy (Hayden/Josh). Volume back in great offense (Hayden).",cons:"Post-ACL athletic ceiling is capped (Hayden). Not the explosive runner he was pre-injury (Josh).",espn:33.0,hayden:37,breakout:false,bust:false,injury:""},
+{name:"Tee Higgins",team:"CIN",pos:"WR",age:"27.0",ht:"6-4",wt:"219",forty:"4.43",pros:"Averaged 18.1 PPR pts/gm in 6 games without Chase since 2022; WR4 pace (Hayden). High-floor complementary option; Bengals #2 in scoring (Josh).",cons:"Always playing second fiddle to Chase (Hayden). Concussion history concerning (Josh).",espn:51.0,hayden:38,breakout:false,bust:false,injury:""},
+{name:"Davante Adams",team:"LAR",pos:"WR",age:"33.9",ht:"6-1",wt:"215",forty:"4.56",pros:"Rams #1 in scoring; Stafford loves veteran WRs (Josh). Route-running mastery is ageless (Hayden).",cons:"Too volatile at age 33—boom or bust weekly (Hayden/Josh). May share targets with Puka Nacua (Josh).",espn:43.0,hayden:39,breakout:false,bust:false,injury:""},
+{name:"Jameson Williams",team:"DET",pos:"WR",age:"24.2",ht:"6-2",wt:"179",forty:"4.29",pros:"Lions #1 in scoring; speed kills defenses (Josh). Deep threat who can break any play open (Hayden).",cons:"Consistency issues—boom/bust profile (Hayden). Thin frame leads to durability concerns (Josh).",espn:57.0,hayden:40,breakout:false,bust:false,injury:""},
+{name:"Travis Etienne",team:"NO",pos:"RB",age:"27.2",ht:"5-10",wt:"215",forty:"4.41",pros:"Saints ran fastest pace in NFL; volume opportunity (Hayden). Pass-catching RB in a quick offense (Josh).",cons:"Saints 23rd in Vegas scoring (Hayden/Josh). Splitting with other backs possible (Josh).",espn:45.0,hayden:41,breakout:false,bust:false,injury:""},
+{name:"Trey McBride",team:"ARI",pos:"TE",age:"25.5",ht:"6-3",wt:"246",forty:"4.56",pros:"TE1 upside with massive target share; elite athlete (Hayden/Josh). Breakout already happened—now sustaining (Josh).",cons:"Cardinals 31st in Vegas scoring (Hayden/Josh). New pass-catchers could reduce share (Josh).",espn:17.0,hayden:42,breakout:false,bust:false,injury:""},
+{name:"Terry McLaurin",team:"WAS",pos:"WR",age:"31.0",ht:"6-0",wt:"210",forty:"4.35",pros:"Commanders 17th in scoring; Daniels loves him (Josh). Speed + route combo still elite at 31 (Hayden).",cons:"Stefon Diggs arrival steals targets (Hayden). Age beginning to be a factor (Josh).",espn:54.0,hayden:43,breakout:false,bust:false,injury:""},
+{name:"D'Andre Swift",team:"CHI",pos:"RB",age:"27.5",ht:"5-9",wt:"215",forty:"4.48",pros:"Bears 10th in Vegas scoring; pass-catching upside (Josh). Explosive when healthy (Hayden).",cons:"Colston Loveland and Luther Burden steal passing work (Hayden). Injury history is extensive (Josh).",espn:60.0,hayden:44,breakout:false,bust:false,injury:""},
+{name:"Brock Bowers",team:"LV",pos:"TE",age:"23.0",ht:"6-4",wt:"230",forty:"4.49",pros:"Kirk Cousins + Klint Kubiak is a real NFL setup finally (Hayden). Generational TE talent (Josh).",cons:"Raiders 28th in Vegas scoring (Hayden/Josh). Ceiling capped by bad offense around him (Josh).",espn:22.0,hayden:45,breakout:false,bust:false,injury:""},
+{name:"Ladd McConkey",team:"LAC",pos:"WR",age:"23.9",ht:"6-0",wt:"186",forty:"4.39",pros:"Chargers 14th in scoring; Herbert's go-to target (Josh). Efficient and savvy route-runner (Hayden).",cons:"Frame is slight for contested catches (Hayden). Omarion Hampton eating into passing game (Josh).",espn:47.0,hayden:46,breakout:false,bust:false,injury:""},
+{name:"Rome Odunze",team:"CHI",pos:"WR",age:"23.3",ht:"6-3",wt:"215",forty:"4.45",pros:"Bears 10th in scoring; big frame with Caleb Williams improving (Josh). Year 2 leap candidate (Hayden).",cons:"Luther Burden, Loveland competing for targets (Hayden). Caleb still inconsistent (Josh).",espn:61.0,hayden:47,breakout:false,bust:false,injury:""},
+{name:"Bucky Irving",team:"TB",pos:"RB",age:"23.4",ht:"5-10",wt:"210",forty:"4.55",pros:"Bucs 15th in scoring; lead-back role (Josh). Efficient runner with pass-catching upside (Hayden).",cons:"Kenny Gainwell signed as pass-catching threat (Hayden). Not the most explosive athlete (Josh).",espn:50.0,hayden:48,breakout:false,bust:false,injury:""},
+{name:"Drake Maye",team:"NE",pos:"QB",age:"24.0",ht:"6-4",wt:"225",forty:"4.58",pros:"Patriots 13th in scoring; top-2 QB finish last year despite OL concerns (Hayden/Josh). Elite arm talent with rushing upside (Josh).",cons:"OL is a concern long-term (Hayden). Weapons still developing (Josh).",espn:44.0,hayden:49,breakout:false,bust:false,injury:""},
+{name:"DJ Moore",team:"BUF",pos:"WR",age:"29.3",ht:"6-0",wt:"210",forty:"4.42",pros:"Bills 6th in scoring; Josh Allen finally gets a real WR1 weapon (Hayden). Consistent producer everywhere he's been (Josh).",cons:"Is he 'good enough' to deliver at ADP? (Hayden/Josh). Age 29 entering decline window (Josh).",espn:59.0,hayden:50,breakout:false,bust:false,injury:""},
+{name:"Jaylen Waddle",team:"DEN",pos:"WR",age:"27.8",ht:"5-10",wt:"182",forty:"4.37",pros:"Broncos 21st in scoring but Waddle's speed creates separation (Josh). New team, fresh start (Hayden).",cons:"Denver is run-first under Payton (Hayden). Smaller frame, injury history (Josh).",espn:53.0,hayden:51,breakout:false,bust:false,injury:"Leg strain; expected back next week per Payton"},
+{name:"Quinshon Judkins",team:"CLE",pos:"RB",age:"23.2",ht:"6-0",wt:"219",forty:"4.53",pros:"Workhorse role in Cleveland (Josh). Physical runner who can handle volume (Hayden).",cons:"Browns 30th in Vegas scoring—terrible situation (Hayden/Josh). Offense is putrid (Josh).",espn:49.0,hayden:52,breakout:false,bust:false,injury:""},
+{name:"Bhayshul Tuten",team:"JAX",pos:"RB",age:"24.7",ht:"5-10",wt:"200",forty:"4.40",pros:"Jaguars 18th in scoring; explosive athlete (Josh). Breakout speed makes him a big-play threat (Hayden).",cons:"Jax offense still finding identity (Hayden). Competition in backfield (Josh).",espn:68.0,hayden:53,breakout:false,bust:false,injury:""},
+{name:"Lamar Jackson",team:"BAL",pos:"QB",age:"29.6",ht:"6-2",wt:"212",forty:"4.34",pros:"Ravens #3 in scoring; rushing floor is unmatched (Hayden/Josh). MVP-caliber ceiling every year (Josh).",cons:"Throwing accuracy still inconsistent (Hayden). Relies heavily on rushing which ages poorly (Josh).",espn:34.0,hayden:54,breakout:false,bust:false,injury:""},
+{name:"Alec Pierce",team:"IND",pos:"WR",age:"25.8",ht:"6-3",wt:"211",forty:"4.41",pros:"Deep threat in Colts offense; big-play ability (Josh). Breakout candidate with more targets available (Hayden).",cons:"Colts 16th in scoring (Hayden). Has underperformed expectations so far (Josh).",espn:83.0,hayden:55,breakout:false,bust:false,injury:"PUP list — ankle surgery recovery; expected back soon"},
+{name:"Mike Evans",team:"SF",pos:"WR",age:"33.1",ht:"6-5",wt:"231",forty:"4.53",pros:"49ers 7th in scoring; red-zone monster (Hayden/Josh). Physical dominance in the end zone (Hayden).",cons:"Age 33; how much does he have left? (Hayden/Josh). Sharing targets in loaded SF offense (Josh).",espn:82.0,hayden:56,breakout:false,bust:false,injury:""},
+{name:"Joe Burrow",team:"CIN",pos:"QB",age:"29.9",ht:"6-4",wt:"221",forty:"4.68",pros:"Bengals #2 in scoring; MVP candidate when healthy (Hayden). Improved OL helps sustainability (Hayden).",cons:"Injury history—needs to stay on the field (Hayden/Josh). Zero rushing upside limits QB ceiling (Josh).",espn:52.0,hayden:57,breakout:false,bust:false,injury:""},
+{name:"Luther Burden III",team:"CHI",pos:"WR",age:"22.0",ht:"5-11",wt:"208",forty:"4.42",pros:"Bears 10th in scoring; explosive slot WR with YAC ability (Josh). Rookie with immediate fantasy impact potential (Hayden).",cons:"Crowded WR room in Chicago (Hayden). Unproven at NFL level (Josh).",espn:66.0,hayden:58,breakout:false,bust:false,injury:"Groin injury Aug 8; missing preseason, hoping Week 1"},
+{name:"TreVeyon Henderson",team:"NE",pos:"RB",age:"23.0",ht:"5-10",wt:"214",forty:"4.35",pros:"Patriots 13th in scoring; elite speed in Maye's offense (Hayden). Explosive home-run hitter (Josh).",cons:"Rhamondre Stevenson still there for committee (Hayden). Injury-prone college career (Josh).",espn:62.0,hayden:59,breakout:false,bust:false,injury:""},
+{name:"Courtland Sutton",team:"DEN",pos:"WR",age:"31.0",ht:"6-3",wt:"216",forty:"4.54",pros:"Bo Nix's top target; physical X-receiver (Josh). Reliable volume play in Denver (Hayden).",cons:"Broncos 21st in scoring (Hayden). Age 31, declining athleticism (Josh).",espn:71.0,hayden:60,breakout:false,bust:false,injury:""},
+{name:"David Montgomery",team:"HOU",pos:"RB",age:"29.4",ht:"5-10",wt:"224",forty:"4.63",pros:"Texans 19th in scoring; goal-line role secured (Josh). Short-yardage workhorse (Hayden).",cons:"'Desperation' fantasy pick per Hayden/Josh. Woody Marks competition; HOU OL worries (Hayden).",espn:63.0,hayden:61,breakout:false,bust:false,injury:""},
+{name:"Christian Watson",team:"GB",pos:"WR",age:"27.1",ht:"6-5",wt:"208",forty:"4.36",pros:"Packers 8th in scoring; size/speed combo is elite (Josh). TD upside through the roof (Hayden).",cons:"Injury-prone—has never played a full season (Hayden/Josh). Inconsistent route-running (Josh).",espn:90.0,hayden:62,breakout:false,bust:false,injury:""},
+{name:"Marvin Harrison Jr.",team:"ARI",pos:"WR",age:"23.1",ht:"6-4",wt:"209",forty:"4.33",pros:"Generational talent; elite measurables (Josh). Will eventually be a top-5 WR (Hayden).",cons:"Cardinals 31st in Vegas scoring (Hayden/Josh). Drops were an issue as a rookie (Josh).",espn:79.0,hayden:63,breakout:false,bust:false,injury:"Foot issue from offseason; status questionable"},
+{name:"DK Metcalf",team:"PIT",pos:"WR",age:"28.8",ht:"6-4",wt:"235",forty:"4.33",pros:"Physical freak; Steelers 24th in scoring (Josh). Size/speed still unmatched (Hayden).",cons:"Pittsburgh offense limits upside (Hayden/Josh). Sharing with Michael Pittman (Josh).",espn:72.0,hayden:64,breakout:false,bust:false,injury:""},
+{name:"Colston Loveland",team:"CHI",pos:"TE",age:"22.0",ht:"6-5",wt:"245",forty:"4.54",pros:"Bears 10th in scoring; elite TE prospect (Hayden/Josh). Athletic freak who can stretch the seam (Hayden).",cons:"Rookie TE typically takes time to develop (Hayden). Crowded Chicago passing game (Josh).",espn:41.0,hayden:65,breakout:false,bust:false,injury:""},
+{name:"Tony Pollard",team:"TEN",pos:"RB",age:"27.6",ht:"6-0",wt:"210",forty:"4.44",pros:"Every-week FLEX option debate; lead back in Tennessee (Hayden/Josh). Pass-catching ability adds PPR value (Hayden).",cons:"Titans 26th in Vegas scoring (Hayden/Josh). Tyjae Spears competition (Josh).",espn:75.0,hayden:66,breakout:false,bust:false,injury:""},
+{name:"Parker Washington",team:"JAX",pos:"WR",age:"23.5",ht:"5-10",wt:"203",forty:"4.45",pros:"Jags 18th in scoring; slot role with Trevor Lawrence (Josh). Quick and shifty underneath (Hayden).",cons:"Size limits outside usage (Hayden). Jakobi Meyers competing for targets (Josh).",espn:91.0,hayden:68,breakout:false,bust:false,injury:""},
+{name:"Brian Thomas Jr.",team:"JAX",pos:"WR",age:"23.2",ht:"6-3",wt:"209",forty:"4.33",pros:"Speed and size combination elite; Jags 18th in scoring (Josh). Big-play threat every snap (Hayden).",cons:"Jacksonville offense inconsistent (Hayden). May lose targets to Parker Washington (Josh).",espn:95.0,hayden:69,breakout:false,bust:false,injury:""},
+{name:"Tyler Warren",team:"IND",pos:"TE",age:"24.6",ht:"6-6",wt:"255",forty:"4.69",pros:"Set to explode with changes in Colts receiving corps (Hayden/Josh). Biggest beneficiary of IND roster moves (Hayden).",cons:"Colts 16th in scoring (Hayden). Unproven in new system (Josh).",espn:42.0,hayden:70,breakout:false,bust:false,injury:""},
+{name:"Rico Dowdle",team:"PIT",pos:"RB",age:"27.3",ht:"6-0",wt:"215",forty:"4.50",pros:"Lead-back role in Pittsburgh (Josh). Steady, reliable runner (Hayden).",cons:"Steelers 24th in scoring (Hayden/Josh). Jaylen Warren competition (Josh).",espn:101.0,hayden:71,breakout:false,bust:false,injury:""},
+{name:"Rhamondre Stevenson",team:"NE",pos:"RB",age:"27.8",ht:"6-0",wt:"227",forty:"4.63",pros:"Patriots 13th in scoring; power back complement to Henderson (Hayden). Goal-line role (Josh).",cons:"Henderson taking lead-back duties (Hayden). Not an explosive athlete (Josh).",espn:102.0,hayden:72,breakout:false,bust:false,injury:""},
+{name:"Jayden Daniels",team:"WAS",pos:"QB",age:"24.5",ht:"6-4",wt:"210",forty:"4.47",pros:"Commanders 17th in scoring; dual-threat upside elite (Josh). Rushing floor gives massive QB advantage (Hayden).",cons:"Diggs + McLaurin may mean less rushing designed (Hayden). Sophomore slump risk (Josh).",espn:46.0,hayden:73,breakout:false,bust:false,injury:""},
+{name:"Jadarian Price",team:"SEA",pos:"RB",age:"23.0",ht:"5-10",wt:"205",forty:"4.42",pros:"Seahawks 9th in scoring; breakout potential (Josh). Athletic profile fits Seattle's scheme (Hayden).",cons:"Zach Charbonnet still rostered (Hayden). Unproven as featured back (Josh).",espn:69.0,hayden:74,breakout:false,bust:false,injury:""},
+{name:"Carnell Tate",team:"TEN",pos:"WR",age:"21.6",ht:"6-2",wt:"190",forty:"4.38",pros:"Titans 26th in scoring but Tate has WR1 tools (Josh). Young breakout candidate (Hayden).",cons:"Titans offense is bad (Hayden/Josh). Cam Ward at QB is unproven (Josh).",espn:58.0,hayden:75,breakout:false,bust:false,injury:""},
+{name:"Jalen Hurts",team:"PHI",pos:"QB",age:"28.0",ht:"6-1",wt:"223",forty:"4.59",pros:"Eagles 12th in scoring; rushing upside makes him a safe QB1 (Josh). RPO scheme creates easy fantasy points (Hayden).",cons:"Passing efficiency has declined (Hayden). Injury concerns (Josh).",espn:48.0,hayden:77,breakout:false,bust:false,injury:""},
+{name:"Chuba Hubbard",team:"CAR",pos:"RB",age:"27.0",ht:"6-0",wt:"201",forty:"4.50",pros:"Lead back in Carolina; Panthers 27th in scoring (Josh). Volume play at cheap cost (Hayden).",cons:"Panthers offense is bottom-tier (Hayden/Josh). Not an elite athlete (Josh).",espn:104.0,hayden:78,breakout:false,bust:false,injury:""},
+{name:"Michael Pittman Jr.",team:"PIT",pos:"WR",age:"28.8",ht:"6-4",wt:"223",forty:"4.52",pros:"Steelers 24th in scoring; reliable possession WR (Josh). High-floor target hog (Hayden).",cons:"Pittsburgh offense limits upside (Hayden/Josh). DK Metcalf sharing targets (Josh).",espn:77.0,hayden:80,breakout:false,bust:false,injury:""},
+{name:"Quentin Johnston",team:"LAC",pos:"WR",age:"24.2",ht:"6-3",wt:"208",forty:"4.49",pros:"Chargers 14th in scoring; big-play WR2 (Josh). Breakout candidate with more targets (Hayden).",cons:"Has underperformed since being drafted (Hayden/Josh). Inconsistent hands (Josh).",espn:139.0,hayden:84,breakout:false,bust:false,injury:""},
+{name:"Harold Fannin Jr.",team:"CLE",pos:"TE",age:"22.1",ht:"6-4",wt:"237",forty:"4.52",pros:"Browns' top pass-catcher; elite TE prospect (Hayden). Target hog in Cleveland (Josh).",cons:"Browns 30th in scoring—terrible offense (Hayden/Josh). Rookie TE development curve (Josh).",espn:65.0,hayden:86,breakout:false,bust:false,injury:""},
+{name:"Chris Godwin",team:"TB",pos:"WR",age:"30.5",ht:"6-1",wt:"209",forty:"4.42",pros:"Bucs 15th in scoring; slot machine with Baker (Josh). PPR monster when healthy (Hayden).",cons:"Coming off major knee injury (Hayden/Josh). Age 30, declining (Josh).",espn:140.0,hayden:88,breakout:false,bust:false,injury:""},
+{name:"Jordyn Tyson",team:"NO",pos:"WR",age:"21.8",ht:"6-0",wt:"191",forty:"4.38",pros:"Saints ran fastest pace; rookie sleeper (Hayden). Speed and route ability (Josh).",cons:"Saints 23rd in scoring (Hayden). Unproven at NFL level (Josh).",espn:86.0,hayden:89,breakout:false,bust:false,injury:""},
+{name:"J.K. Dobbins",team:"DEN",pos:"RB",age:"27.5",ht:"5-10",wt:"209",forty:"4.44",pros:"Broncos 21st in scoring; proven runner when healthy (Hayden/Josh). Efficient in zone scheme (Hayden).",cons:"Extensive injury history (Hayden/Josh). RJ Harvey and Jonah Coleman competition (Josh).",espn:116.0,hayden:90,breakout:false,bust:false,injury:"Left practice with trainers; possibly cramps — monitoring"},
+{name:"Jayden Reed",team:"GB",pos:"WR",age:"24.8",ht:"5-11",wt:"187",forty:"4.45",pros:"Packers 8th in scoring; versatile slot WR (Josh). Year 3 breakout candidate (Hayden).",cons:"Christian Watson and Matthew Golden competition (Hayden). Inconsistent target share (Josh).",espn:135.0,hayden:94,breakout:false,bust:false,injury:""},
+{name:"Jordan Addison",team:"MIN",pos:"WR",age:"24.0",ht:"6-0",wt:"175",forty:"4.36",pros:"Vikings 20th in scoring; speed WR opposite Jefferson (Josh). Deep threat upside (Hayden).",cons:"Kyler Murray at QB is uncertain (Hayden). Light frame, durability risk (Josh).",espn:113.0,hayden:95,breakout:false,bust:false,injury:""},
+{name:"Sam LaPorta",team:"DET",pos:"TE",age:"24.9",ht:"6-3",wt:"245",forty:"4.59",pros:"Lions #1 in scoring; showed TE1 upside as rookie (Hayden). Athletic pass-catcher in elite offense (Josh).",cons:"Target share may shrink with WR growth (Hayden). Boom/bust weekly (Josh).",espn:56.0,hayden:96,breakout:false,bust:false,injury:""},
+{name:"Deebo Samuel",team:"SF",pos:"WR",age:"30.6",ht:"5-11",wt:"214",forty:"4.48",pros:"49ers 7th in scoring; versatile weapon (Hayden/Josh). Rushing + receiving dual threat (Hayden).",cons:"Age 30 with heavy usage history (Hayden/Josh). Mike Evans added reduces share (Josh).",espn:130.0,hayden:97,breakout:false,bust:false,injury:""},
+{name:"Josh Downs",team:"IND",pos:"WR",age:"24.1",ht:"5-9",wt:"171",forty:"4.48",pros:"Colts 16th in scoring; slot specialist with connection to QB (Josh). PPR value in underneath game (Hayden).",cons:"Small frame limits upside (Hayden). Tyler Warren taking targets (Josh).",espn:111.0,hayden:98,breakout:false,bust:false,injury:""},
+{name:"Stefon Diggs",team:"WAS",pos:"WR",age:"32.9",ht:"6-0",wt:"191",forty:"4.46",pros:"Commanders 17th in scoring; Daniels adds to his value (Hayden). Efficient route runner—2.42 YPRR, 5th among WRs (Josh).",cons:"Age 32, ACL recovery limited 2025 routes to 68.3% of dropbacks (Josh). Sharing with McLaurin (Hayden).",espn:128.0,hayden:99,breakout:false,bust:false,injury:""},
+{name:"Aaron Jones",team:"MIN",pos:"RB",age:"31.9",ht:"5-9",wt:"208",forty:"4.56",pros:"Vikings 20th in scoring; proven veteran (Josh). Pass-catching back with PPR value (Hayden).",cons:"Age 31—serious decline risk (Hayden/Josh). Jordan Mason behind him (Josh).",espn:115.0,hayden:100,breakout:false,bust:false,injury:""},
+{name:"Patrick Mahomes",team:"KC",pos:"QB",age:"30.9",ht:"6-2",wt:"225",forty:"4.80",pros:"Chiefs 11th in scoring; still the GOAT floor (Josh). Rashee Rice return boosts weapons (Hayden).",cons:"Weapons have declined over years (Hayden). No rushing upside anymore (Josh).",espn:99.0,hayden:103,breakout:false,bust:false,injury:""},
+{name:"Tucker Kraft",team:"GB",pos:"TE",age:"24.3",ht:"6-5",wt:"254",forty:"4.55",pros:"Packers 8th in scoring; could go 'either way'—TE1 upside exists (Hayden/Josh). Athletic pass-catcher (Hayden).",cons:"Inconsistent usage week to week (Hayden/Josh). WR room is deep (Josh).",espn:87.0,hayden:104,breakout:false,bust:false,injury:""},
+{name:"Caleb Williams",team:"CHI",pos:"QB",age:"24.5",ht:"6-1",wt:"214",forty:"4.56",pros:"Bears 10th in scoring; year 2 leap candidate with new weapons (Hayden/Josh). Arm talent is elite (Josh).",cons:"Was inconsistent as a rookie (Hayden/Josh). High variance week to week (Josh).",espn:80.0,hayden:105,breakout:false,bust:false,injury:""},
+{name:"Xavier Worthy",team:"KC",pos:"WR",age:"22.3",ht:"5-11",wt:"165",forty:"4.21",pros:"Chiefs 11th in scoring; fastest player in NFL (Josh). Big-play threat on any snap (Hayden).",cons:"Tiny frame limits target ceiling (Hayden). Mahomes spreads ball around (Josh).",espn:133.0,hayden:106,breakout:false,bust:false,injury:""},
+{name:"Makai Lemon",team:"PHI",pos:"WR",age:"20.4",ht:"5-11",wt:"185",forty:"4.39",pros:"Eagles 12th in scoring; dynamic rookie slot WR (Josh). Electric in space, immediate impact (Hayden).",cons:"Rookie WR adjustment (Hayden). A.J. Brown gone but DeVonta Smith takes WR1 role (Josh).",espn:110.0,hayden:107,breakout:false,bust:false,injury:"Hamstring injury; timeline TBD"},
+{name:"Khalil Shakir",team:"BUF",pos:"WR",age:"25.6",ht:"6-0",wt:"190",forty:"4.43",pros:"Bills 6th in scoring; reliable slot WR (Josh). Consistent target share (Hayden).",cons:"DJ Moore arrival could push him down (Hayden). Limited ceiling as WR3 (Josh).",espn:126.0,hayden:108,breakout:false,bust:false,injury:""},
+{name:"Justin Herbert",team:"LAC",pos:"QB",age:"28.5",ht:"6-6",wt:"236",forty:"4.68",pros:"Chargers 14th in scoring; elite arm talent (Josh). Healthy season could mean top-5 QB finish (Hayden).",cons:"Harbaugh's run-first limits passing volume (Hayden/Josh). Doesn't run enough (Josh).",espn:100.0,hayden:109,breakout:false,bust:false,injury:""},
+{name:"Kyle Monangai",team:"CHI",pos:"RB",age:"24.0",ht:"5-11",wt:"212",forty:"4.50",pros:"Bears 10th in scoring; change-of-pace back with upside (Josh). Could steal work from Swift (Hayden).",cons:"D'Andre Swift is the starter (Hayden). Unproven in NFL (Josh).",espn:123.0,hayden:111,breakout:false,bust:false,injury:""},
+{name:"Rashid Shaheed",team:"SEA",pos:"WR",age:"26.8",ht:"6-0",wt:"178",forty:"4.35",pros:"Seahawks 9th in scoring; fantasy sleeper with speed (Hayden/Josh). Deep threat who can win on any route (Hayden).",cons:"Sharing with JSN and Cooper Kupp (Hayden). Inconsistent volume (Josh).",espn:157.0,hayden:122,breakout:false,bust:false,injury:""},
+{name:"Matthew Golden",team:"GB",pos:"WR",age:"22.6",ht:"6-1",wt:"196",forty:"4.38",pros:"Packers 8th in scoring; athletic rookie with upside (Josh). Explosive plays expected (Hayden).",cons:"Deep WR room in Green Bay (Hayden/Josh). Needs to earn targets (Josh).",espn:97.0,hayden:120,breakout:false,bust:false,injury:""},
+{name:"Dallas Goedert",team:"PHI",pos:"TE",age:"31.4",ht:"6-5",wt:"256",forty:"4.60",pros:"Eagles 12th in scoring; could be top-2 pass catcher in PHI offense (Hayden/Josh). Reliable target (Hayden).",cons:"Age 31 with injury history (Hayden). AJ Brown gone means more defensive attention (Josh).",espn:88.0,hayden:118,breakout:false,bust:false,injury:""},
+];
+
+// ══════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════
+let boardData = JSON.parse(JSON.stringify(defaultPlayers));
+let db = null;
+let boardRef = null;
+let userName = '';
+let isFirebaseConnected = false;
+const BOARD_ID = 'main'; // single shared board
+
+// ══════════════════════════════════════════════
+//  FIREBASE SETUP
+// ══════════════════════════════════════════════
+function connectFirebase() {
+  const raw = document.getElementById('configInput').value.trim();
+  const name = document.getElementById('nameInput').value.trim();
+  const errEl = document.getElementById('setupError');
+
+  if (!name) {
+    errEl.textContent = 'Please enter your name.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  let config;
+  try {
+    config = JSON.parse(raw);
+    if (!config.apiKey || !config.databaseURL) throw new Error();
+  } catch {
+    errEl.textContent = 'Invalid config. Make sure it\'s valid JSON with apiKey and databaseURL.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  // Save to localStorage
+  localStorage.setItem('fb_config', raw);
+  localStorage.setItem('fb_name', name);
+  userName = name;
+
+  try {
+    firebase.initializeApp(config);
+    db = firebase.database();
+    boardRef = db.ref('boards/' + BOARD_ID);
+    startSync();
+  } catch (e) {
+    errEl.textContent = 'Firebase error: ' + e.message;
+    errEl.style.display = 'block';
+    return;
+  }
+
+  // Hide overlay, show app
+  document.getElementById('setupOverlay').style.display = 'none';
+  document.getElementById('syncBar').style.display = 'flex';
+  document.getElementById('mainHeader').style.display = 'flex';
+  document.getElementById('mainLegend').style.display = 'flex';
+  document.getElementById('mainTabs').style.display = 'flex';
+  document.getElementById('userLabel').textContent = '👤 ' + userName;
+}
+
+function startSync() {
+  const syncDot = document.getElementById('syncDot');
+  const syncText = document.getElementById('syncText');
+
+  // Presence
+  const connRef = db.ref('.info/connected');
+  const presenceRef = db.ref('presence/' + BOARD_ID);
+  const myPresence = presenceRef.push();
+
+  connRef.on('value', snap => {
+    if (snap.val()) {
+      syncDot.className = 'sync-dot connected';
+      syncText.textContent = 'Live sync active';
+      isFirebaseConnected = true;
+      myPresence.onDisconnect().remove();
+      myPresence.set({ name: userName, ts: firebase.database.ServerValue.TIMESTAMP });
+    } else {
+      syncDot.className = 'sync-dot disconnected';
+      syncText.textContent = 'Reconnecting...';
+      isFirebaseConnected = false;
+    }
+  });
+
+  // Watch presence
+  presenceRef.on('value', snap => {
+    const users = snap.val();
+    const count = users ? Object.keys(users).length : 0;
+    const names = users ? Object.values(users).map(u => u.name) : [];
+    document.getElementById('usersOnline').textContent =
+      count > 0 ? `${count} online: ${names.join(', ')}` : '';
+  });
+
+  // Listen for board data
+  boardRef.on('value', snap => {
+    const data = snap.val();
+    if (data && Array.isArray(data)) {
+      boardData = data;
+      renderBoard();
+      renderMyBoard();
+    }
+  });
+
+  // Seed if empty
+  boardRef.once('value', snap => {
+    if (!snap.val()) {
+      boardRef.set(defaultPlayers);
+    }
+  });
+}
+
+function syncToFirebase() {
+  if (boardRef && isFirebaseConnected) {
+    boardRef.set(boardData);
+  }
+}
+
+// ══════════════════════════════════════════════
+//  AUTO-CONNECT IF SAVED CONFIG EXISTS
+// ══════════════════════════════════════════════
+(function autoConnect() {
+  const savedConfig = localStorage.getItem('fb_config');
+  const savedName = localStorage.getItem('fb_name');
+  if (savedConfig && savedName) {
+    document.getElementById('configInput').value = savedConfig;
+    document.getElementById('nameInput').value = savedName;
+    connectFirebase();
+  }
+})();
+
+// ══════════════════════════════════════════════
+//  RENDERING
+// ══════════════════════════════════════════════
+function getVegasClass(rank) {
+  if (rank <= 10) return 'vegas-top';
+  if (rank <= 20) return 'vegas-mid';
+  return 'vegas-bot';
+}
+
+function renderBoard() {
+  const body = document.getElementById('boardBody');
+  const search = document.getElementById('searchBox').value.toLowerCase();
+  const posF = document.getElementById('posFilter').value;
+  body.innerHTML = '';
+  let visIdx = 0;
+
+  boardData.forEach((p, i) => {
+    if (search && !p.name.toLowerCase().includes(search) && !p.team.toLowerCase().includes(search)) return;
+    if (posF && p.pos !== posF) return;
+    visIdx++;
+
+    if ((visIdx - 1) % 12 === 0) {
+      const roundNum = Math.floor((visIdx - 1) / 12) + 1;
+      const pickStart = (roundNum - 1) * 12 + 1;
+      const pickEnd = roundNum * 12;
+      const rr = document.createElement('tr');
+      rr.className = 'round-row';
+      rr.innerHTML = `<td colspan="18">ROUND ${roundNum} — Picks ${pickStart}–${pickEnd}</td>`;
+      body.appendChild(rr);
+    }
+
+    const vr = vegasRank[p.team] || '—';
+    const vrClass = typeof vr === 'number' ? getVegasClass(vr) : '';
+    const tr = document.createElement('tr');
+    tr.draggable = true;
+    tr.dataset.index = i;
+    tr.innerHTML = `
+      <td class="rank-cell">${visIdx}</td>
+      <td><div class="move-btns">
+        <button onclick="movePlayer(${i},-1)" title="Move Up">▲</button>
+        <button onclick="movePlayer(${i},1)" title="Move Down">▼</button>
+      </div></td>
+      <td class="player-name" contenteditable="true">${p.name}</td>
+      <td contenteditable="true">${p.team}</td>
+      <td><span class="pos-badge pos-${p.pos}">${p.pos}</span></td>
+      <td contenteditable="true">${p.age}</td>
+      <td contenteditable="true">${p.ht}</td>
+      <td contenteditable="true">${p.wt}</td>
+      <td contenteditable="true">${p.forty}</td>
+      <td class="flag-cell"><button class="flag-btn ${p.breakout ? 'active-breakout' : ''}" onclick="toggleFlag(${i},'breakout')" title="Target">🚀</button></td>
+      <td class="flag-cell"><button class="flag-btn ${p.bust ? 'active-bust' : ''}" onclick="toggleFlag(${i},'bust')" title="Bust">💣</button></td>
+      <td class="flag-cell">
+        <button class="flag-btn ${p.injury ? 'active-injury' : ''}" onclick="toggleInjury(${i})" title="Injury">🏥</button>
+      </td>
+      <td class="injury-notes-cell" contenteditable="true" onblur="updateInjuryNote(${i},this.textContent)">${p.injury || ''}</td>
+      <td class="pros-cell" contenteditable="true">${p.pros}</td>
+      <td class="cons-cell" contenteditable="true">${p.cons}</td>
+      <td contenteditable="true">${p.espn}</td>
+      <td contenteditable="true">${p.hayden}</td>
+      <td class="vegas-rank ${vrClass}">${typeof vr === 'number' ? vr + '/32' : vr}</td>
+    `;
+
+    tr.addEventListener('dragstart', handleDragStart);
+    tr.addEventListener('dragover', handleDragOver);
+    tr.addEventListener('drop', handleDrop);
+    tr.addEventListener('dragend', handleDragEnd);
+
+    tr.querySelectorAll('[contenteditable]').forEach((cell, ci) => {
+      cell.addEventListener('blur', () => {
+        const fields = ['name','team','','age','ht','wt','forty','','','','pros','cons','espn','hayden'];
+        if (fields[ci] && fields[ci] !== '') {
+          boardData[i][fields[ci]] = cell.textContent;
+          syncToFirebase();
+        }
+      });
+    });
+
+    body.appendChild(tr);
+  });
+}
+
+function toggleFlag(idx, type) {
+  boardData[idx][type] = !boardData[idx][type];
+  renderBoard();
+  renderMyBoard();
+  syncToFirebase();
+}
+
+function toggleInjury(idx) {
+  if (boardData[idx].injury) {
+    boardData[idx].injury = '';
+  } else {
+    boardData[idx].injury = 'Add note…';
+  }
+  renderBoard();
+  syncToFirebase();
+  if (boardData[idx].injury) {
+    setTimeout(() => {
+      const rows = document.querySelectorAll('#boardBody tr:not(.round-row)');
+      for (const row of rows) {
+        if (parseInt(row.dataset.index) === idx) {
+          const noteCell = row.querySelector('.injury-notes-cell');
+          if (noteCell) { noteCell.focus(); document.execCommand('selectAll',false,null); }
+          break;
+        }
+      }
+    }, 50);
+  }
+}
+
+function updateInjuryNote(idx, text) {
+  boardData[idx].injury = text;
+  syncToFirebase();
+}
+
+function movePlayer(idx, dir) {
+  const newIdx = idx + dir;
+  if (newIdx < 0 || newIdx >= boardData.length) return;
+  [boardData[idx], boardData[newIdx]] = [boardData[newIdx], boardData[idx]];
+  renderBoard();
+  syncToFirebase();
+}
+
+let dragIdx = null;
+function handleDragStart(e) {
+  dragIdx = parseInt(this.dataset.index);
+  this.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+}
+function handleDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  this.classList.add('drag-over');
+}
+function handleDrop(e) {
+  e.preventDefault();
+  const dropIdx = parseInt(this.dataset.index);
+  if (dragIdx !== null && dragIdx !== dropIdx) {
+    const item = boardData.splice(dragIdx, 1)[0];
+    boardData.splice(dropIdx, 0, item);
+    renderBoard();
+    syncToFirebase();
+  }
+}
+function handleDragEnd() {
+  document.querySelectorAll('.dragging, .drag-over').forEach(el => {
+    el.classList.remove('dragging', 'drag-over');
+  });
+}
+
+function filterPlayers() { renderBoard(); }
+
+function resetBoard() {
+  if (!confirm('Reset the entire board to defaults? This affects your co-manager too.')) return;
+  boardData = JSON.parse(JSON.stringify(defaultPlayers));
+  renderBoard();
+  renderMyBoard();
+  syncToFirebase();
+}
+
+function exportBoard() {
+  const blob = new Blob([JSON.stringify(boardData, null, 2)], {type: 'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'draft_board_2026.json';
+  a.click();
+}
+
+function saveHTML() {
+  const html = document.documentElement.outerHTML;
+  const blob = new Blob(['<!DOCTYPE html>\n' + html], {type: 'text/html'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'my_draft_board_2026.html';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  const btn = event.target;
+  const orig = btn.textContent;
+  btn.textContent = '✅ Saved!';
+  setTimeout(() => btn.textContent = orig, 1500);
+}
+
+function changeName() {
+  const newName = prompt('Enter your name:', userName);
+  if (newName && newName.trim()) {
+    userName = newName.trim();
+    localStorage.setItem('fb_name', userName);
+    document.getElementById('userLabel').textContent = '👤 ' + userName;
+  }
+}
+
+// ══════════════════════════════════════════════
+//  TAB SWITCHING & MY BOARD
+// ══════════════════════════════════════════════
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + tab).classList.add('active');
+  document.querySelector(`.tab-btn[onclick*="${tab}"]`).classList.add('active');
+  if (tab === 'myboard') renderMyBoard();
+}
+
+function renderMyBoard() {
+  const rockets = boardData.filter(p => p.breakout);
+  document.getElementById('myBoardCount').textContent = rockets.length;
+  const container = document.getElementById('myBoardContent');
+
+  if (rockets.length === 0) {
+    container.innerHTML = `
+      <div class="my-board-empty">
+        <span class="big-icon">🚀</span>
+        <strong>No players on your draft board yet.</strong><br>
+        Go to the Research Board and click the 🚀 rocket on players you want to target.<br>
+        They'll show up here organized by round.
+      </div>`;
+    return;
+  }
+
+  const indexed = rockets.map(p => {
+    const pos = boardData.indexOf(p) + 1;
+    return { ...p, boardPos: pos, round: Math.ceil(pos / 12) };
+  });
+
+  const rounds = {};
+  indexed.forEach(p => {
+    if (!rounds[p.round]) rounds[p.round] = [];
+    rounds[p.round].push(p);
+  });
+
+  let html = `<table>
+    <thead><tr>
+      <th style="width:36px">Rk</th>
+      <th>Player</th>
+      <th>Team</th>
+      <th>Pos</th>
+      <th>Age</th>
+      <th>ESPN ADP (PPR)</th>
+      <th>Hayden Rk</th>
+      <th>Vegas Tm</th>
+      <th>🏥 Injury</th>
+      <th>Key Notes</th>
+      <th style="width:60px"></th>
+    </tr></thead><tbody>`;
+
+  Object.keys(rounds).map(Number).sort((a,b) => a - b).forEach(rnd => {
+    const pickStart = (rnd - 1) * 12 + 1;
+    const pickEnd = rnd * 12;
+    html += `<tr class="my-board-round"><td colspan="11">ROUND ${rnd} — Picks ${pickStart}–${pickEnd}</td></tr>`;
+    rounds[rnd].forEach(p => {
+      const vr = vegasRank[p.team] || '—';
+      const vrClass = typeof vr === 'number' ? getVegasClass(vr) : '';
+      const origIdx = boardData.findIndex(d => d.name === p.name);
+      html += `<tr>
+        <td class="rank-cell">${p.boardPos}</td>
+        <td class="player-name">${p.name}</td>
+        <td>${p.team}</td>
+        <td><span class="pos-badge pos-${p.pos}">${p.pos}</span></td>
+        <td>${p.age}</td>
+        <td>${p.espn}</td>
+        <td>${p.hayden}</td>
+        <td class="vegas-rank ${vrClass}">${typeof vr === 'number' ? vr + '/32' : vr}</td>
+        <td style="color:#ff9800;font-size:11px;">${p.injury || '—'}</td>
+        <td class="pros-cell" style="font-size:11px;max-width:300px;white-space:normal;">${p.pros.split('.')[0]}.</td>
+        <td><button class="remove-btn" onclick="removeFromMyBoard(${origIdx})" title="Remove">✕</button></td>
+      </tr>`;
+    });
+  });
+
+  html += '</tbody></table>';
+  container.innerHTML = html;
+}
+
+function removeFromMyBoard(idx) {
+  boardData[idx].breakout = false;
+  renderBoard();
+  renderMyBoard();
+  syncToFirebase();
+}
+
+// Initial render (for non-Firebase / offline use)
+renderBoard();
+renderMyBoard();
+</script>
+</body>
+</html>
