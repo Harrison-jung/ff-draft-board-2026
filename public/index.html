@@ -363,6 +363,8 @@
 <div class="tab-bar" id="mainTabs" style="display:none;">
   <button class="tab-btn active" onclick="switchTab('research')">📋 Research Board</button>
   <button class="tab-btn" onclick="switchTab('myboard')">🚀 My Draft Board <span class="tab-count" id="myBoardCount">0</span></button>
+  <button class="tab-btn" onclick="switchTab('bustlist')">💣 Bomb List <span class="tab-count" id="bustListCount">0</span></button>
+  <button class="tab-btn" onclick="switchTab('injurylist')">🏥 Injury List <span class="tab-count" id="injuryListCount">0</span></button>
 </div>
 
 <!-- ════ RESEARCH BOARD TAB ════ -->
@@ -400,6 +402,20 @@
 <div id="panel-myboard" class="tab-panel">
 <div class="my-board-wrap">
   <div id="myBoardContent"></div>
+</div>
+</div>
+
+<!-- ════ BOMB LIST TAB ════ -->
+<div id="panel-bustlist" class="tab-panel">
+<div class="my-board-wrap">
+  <div id="bustListContent"></div>
+</div>
+</div>
+
+<!-- ════ INJURY LIST TAB ════ -->
+<div id="panel-injurylist" class="tab-panel">
+<div class="my-board-wrap">
+  <div id="injuryListContent"></div>
 </div>
 </div>
 
@@ -514,6 +530,106 @@ const defaultPlayers = [
 {name:"Rashid Shaheed",team:"SEA",pos:"WR",age:"26.8",ht:"6-0",wt:"178",forty:"4.35",pros:"Seahawks 9th in scoring; fantasy sleeper with speed (Hayden/Josh). Deep threat who can win on any route (Hayden).",cons:"Sharing with JSN and Cooper Kupp (Hayden). Inconsistent volume (Josh).",espn:157.0,hayden:122,breakout:false,bust:false,injury:""},
 {name:"Matthew Golden",team:"GB",pos:"WR",age:"22.6",ht:"6-1",wt:"196",forty:"4.38",pros:"Packers 8th in scoring; athletic rookie with upside (Josh). Explosive plays expected (Hayden).",cons:"Deep WR room in Green Bay (Hayden/Josh). Needs to earn targets (Josh).",espn:97.0,hayden:120,breakout:false,bust:false,injury:""},
 {name:"Dallas Goedert",team:"PHI",pos:"TE",age:"31.4",ht:"6-5",wt:"256",forty:"4.60",pros:"Eagles 12th in scoring; could be top-2 pass catcher in PHI offense (Hayden/Josh). Reliable target (Hayden).",cons:"Age 31 with injury history (Hayden). AJ Brown gone means more defensive attention (Josh).",espn:88.0,hayden:118,breakout:false,bust:false,injury:""},
+{name:"Kyle Pitts",team:"ATL",pos:"TE",age:"25.9",ht:"6-6",wt:"245",forty:"4.44",pros:"Elite size-speed combination with legitimate WR1-caliber route-running for the position.",cons:"Target competition in a crowded pass game has capped his ceiling each of the last few seasons.",espn:56.0,hayden:56,breakout:false,bust:false,injury:""},
+{name:"Jaxson Dart",team:"NYG",pos:"QB",age:"23.4",ht:"6-2",wt:"223",forty:"4.62",pros:"Mobile rookie-era QB with real rushing equity in a run-friendly scheme.",cons:"Still learning an NFL playbook; turnover risk is elevated for a first-time starter.",espn:64.0,hayden:64,breakout:false,bust:false,injury:""},
+{name:"Matthew Stafford",team:"LAR",pos:"QB",age:"38.3",ht:"6-3",wt:"220",forty:"4.85",pros:"Veteran arm talent still capable of a top-12 QB week in a loaded receiving corps.",cons:"Age 38 with a long injury history; touchdown regression is a real risk.",espn:68.0,hayden:68,breakout:false,bust:false,injury:""},
+{name:"Dak Prescott",team:"DAL",pos:"QB",age:"33.1",ht:"6-2",wt:"238",forty:"4.70",pros:"Efficient, high-volume passer with a full receiving corps around him.",cons:"Coming off injury absences in recent years; needs a clean bill of health to hit ceiling.",espn:73.0,hayden:73,breakout:false,bust:false,injury:""},
+{name:"Bo Nix",team:"DEN",pos:"QB",age:"26.4",ht:"6-2",wt:"214",forty:"4.51",pros:"Improved fast in year two with real rushing production baked into his floor.",cons:"Denver's run-first identity under Payton can cap his weekly passing volume.",espn:75.0,hayden:75,breakout:false,bust:false,injury:""},
+{name:"Trevor Lawrence",team:"JAX",pos:"QB",age:"27.0",ht:"6-6",wt:"220",forty:"4.65",pros:"No.1 overall pick pedigree with a full offseason under a new-look weapons room.",cons:"Career has been defined by inconsistency and a shaky offensive line.",espn:81.0,hayden:81,breakout:false,bust:false,injury:""},
+{name:"George Kittle",team:"SF",pos:"TE",age:"33.0",ht:"6-4",wt:"250",forty:"4.52",pros:"Elite blocker-receiver combo who remains a focal point of the 49ers passing game.",cons:"Age 33 with an extensive injury history limits his floor from week to week.",espn:84.0,hayden:84,breakout:false,bust:false,injury:""},
+{name:"Travis Kelce",team:"KC",pos:"TE",age:"37.0",ht:"6-5",wt:"250",forty:"4.61",pros:"Still Mahomes' most trusted target in critical situations.",cons:"Father Time is undefeated—target share and snaps are being managed at this age.",espn:88.0,hayden:88,breakout:false,bust:false,injury:""},
+{name:"Jaylen Warren",team:"PIT",pos:"RB",age:"27.4",ht:"5-8",wt:"215",forty:"4.53",pros:"Change-of-pace back with legitimate receiving-down role and standalone PPR value.",cons:"Committee usage caps his ceiling as long as he splits early-down work.",espn:92.0,hayden:92,breakout:false,bust:false,injury:""},
+{name:"Brock Purdy",team:"SF",pos:"QB",age:"26.5",ht:"6-1",wt:"220",forty:"4.75",pros:"Efficient, low-mistake passer plugged into a loaded, scheme-friendly offense.",cons:"Ceiling is capped by a run-heavy play-caller and modest rushing equity.",espn:94.0,hayden:94,breakout:false,bust:false,injury:""},
+{name:"Michael Wilson",team:"ARI",pos:"WR",age:"26.6",ht:"6-2",wt:"213",forty:"4.53",pros:"Reliable possession target who has flashed WR2 upside when featured.",cons:"Buried behind more explosive options in the target hierarchy.",espn:98.0,hayden:98,breakout:false,bust:false,injury:""},
+{name:"Jake Ferguson",team:"DAL",pos:"TE",age:"27.3",ht:"6-5",wt:"250",forty:"4.69",pros:"Reliable red-zone and intermediate target in a pass-heavy offense.",cons:"TE2-caliber weekly upside; touchdown-dependent for spike weeks.",espn:103.0,hayden:103,breakout:false,bust:false,injury:""},
+{name:"Jakobi Meyers",team:"JAX",pos:"WR",age:"29.5",ht:"6-2",wt:"203",forty:"4.63",pros:"Sure-handed possession receiver who consistently commands targets.",cons:"Limited big-play juice caps his weekly ceiling.",espn:107.0,hayden:107,breakout:false,bust:false,injury:""},
+{name:"Travis Hunter",team:"JAX",pos:"WR",age:"23.1",ht:"6-1",wt:"188",forty:"4.40",pros:"Rare two-way talent with elite ball skills and immediate WR1 physical tools.",cons:"Snap-share questions if he continues seeing defensive reps; still a rookie learning curve.",espn:108.0,hayden:108,breakout:false,bust:false,injury:""},
+{name:"Wan'Dale Robinson",team:"TEN",pos:"WR",age:"25.0",ht:"5-8",wt:"178",forty:"4.44",pros:"Underneath PPR floor with reliable target share out of the slot.",cons:"Limited big-play ceiling given his role and frame.",espn:109.0,hayden:109,breakout:false,bust:false,injury:""},
+{name:"Mark Andrews",team:"BAL",pos:"TE",age:"30.9",ht:"6-5",wt:"256",forty:"4.67",pros:"Proven red-zone weapon with a long track record of TE1 finishes.",cons:"Age 31 and facing increased competition for targets at the position.",espn:111.0,hayden:111,breakout:false,bust:false,injury:""},
+{name:"Kenneth Gainwell",team:"TB",pos:"RB",age:"27.0",ht:"5-9",wt:"201",forty:"4.51",pros:"Proven receiving-down back with standalone PPR appeal.",cons:"Early-down role is capped behind the lead back.",espn:112.0,hayden:112,breakout:false,bust:false,injury:""},
+{name:"Jonathon Brooks",team:"CAR",pos:"RB",age:"22.5",ht:"6-0",wt:"216",forty:"4.55",pros:"Explosive talent with lead-back potential once fully healthy off his ACL.",cons:"Injury history and a crowded backfield cloud his week-to-week role.",espn:116.0,hayden:116,breakout:false,bust:false,injury:""},
+{name:"Isaiah Likely",team:"NYG",pos:"TE",age:"26.0",ht:"6-4",wt:"238",forty:"4.61",pros:"Athletic pass-catching tight end capable of big weekly spikes.",cons:"Role and target share still need to solidify in a new offense.",espn:118.0,hayden:118,breakout:false,bust:false,injury:""},
+{name:"Rachaad White",team:"WAS",pos:"RB",age:"27.5",ht:"6-0",wt:"214",forty:"4.48",pros:"Proven three-down back with real receiving-game equity.",cons:"New offense creates uncertainty around his exact role and workload.",espn:120.0,hayden:120,breakout:false,bust:false,injury:""},
+{name:"RJ Harvey",team:"DEN",pos:"RB",age:"23.6",ht:"5-8",wt:"205",forty:"4.40",pros:"Explosive, home-run-hitting rookie with real change-of-pace upside.",cons:"Committee backfield limits his floor as a rookie.",espn:124.0,hayden:124,breakout:false,bust:false,injury:""},
+{name:"T.J. Hockenson",team:"MIN",pos:"TE",age:"29.0",ht:"6-5",wt:"251",forty:"4.68",pros:"Proven high-floor TE1 producer when healthy and featured.",cons:"Injury history is a real concern; touches can be inconsistent.",espn:127.0,hayden:127,breakout:false,bust:false,injury:""},
+{name:"Dalton Kincaid",team:"BUF",pos:"TE",age:"26.7",ht:"6-4",wt:"246",forty:"4.63",pros:"Athletic mismatch weapon in a QB-friendly, pass-heavy offense.",cons:"Target competition among Buffalo's skill-position weapons caps his floor.",espn:129.0,hayden:129,breakout:false,bust:false,injury:""},
+{name:"Jared Goff",team:"DET",pos:"QB",age:"31.6",ht:"6-4",wt:"222",forty:"4.85",pros:"Efficient, high-volume passer plugged into an explosive offense.",cons:"Rushing floor is essentially zero, capping his weekly ceiling versus mobile QBs.",espn:133.0,hayden:133,breakout:false,bust:false,injury:""},
+{name:"Kenyon Sadiq",team:"NYJ",pos:"TE",age:"23.0",ht:"6-3",wt:"250",forty:"4.65",pros:"Athletic rookie tight end with real red-zone size.",cons:"Unproven role in a crowded position group as a rookie.",espn:134.0,hayden:134,breakout:false,bust:false,injury:""},
+{name:"Jacory Croskey-Merritt",team:"WAS",pos:"RB",age:"24.0",ht:"5-11",wt:"213",forty:"4.52",pros:"Physical runner who has flashed real between-the-tackles ability.",cons:"Committee backfield caps his floor as a complementary piece.",espn:136.0,hayden:136,breakout:false,bust:false,injury:""},
+{name:"Blake Corum",team:"LAR",pos:"RB",age:"24.6",ht:"5-8",wt:"205",forty:"4.50",pros:"Efficient, goal-line-capable back in an explosive offense.",cons:"Committee role behind the lead back limits his weekly floor.",espn:137.0,hayden:137,breakout:false,bust:false,injury:""},
+{name:"Hunter Henry",team:"NE",pos:"TE",age:"31.5",ht:"6-5",wt:"250",forty:"4.65",pros:"Reliable red-zone target with a long track record of TD production.",cons:"Age 31 with a modest overall target share.",espn:138.0,hayden:138,breakout:false,bust:false,injury:""},
+{name:"Kyler Murray",team:"MIN",pos:"QB",age:"28.9",ht:"5-10",wt:"207",forty:"4.38",pros:"Elite rushing floor gives him one of the highest weekly floors at the position.",cons:"Injury history and a new offense create real week-to-week volatility.",espn:141.0,hayden:141,breakout:false,bust:false,injury:""},
+{name:"Baker Mayfield",team:"TB",pos:"QB",age:"31.2",ht:"6-1",wt:"215",forty:"4.83",pros:"Proven, high-volume passer plugged into a full receiving corps.",cons:"Turnover-prone tendencies can resurface in tough matchups.",espn:142.0,hayden:142,breakout:false,bust:false,injury:""},
+{name:"KC Concepcion",team:"CLE",pos:"WR",age:"20.7",ht:"5-11",wt:"180",forty:"4.46",pros:"Explosive rookie slot with immediate juice after the catch.",cons:"Rookie learning curve and crowded target competition.",espn:147.0,hayden:147,breakout:false,bust:false,injury:""},
+{name:"Zach Charbonnet",team:"SEA",pos:"RB",age:"24.9",ht:"6-0",wt:"220",forty:"4.53",pros:"Proven receiving-down back with real standalone flex value.",cons:"Committee role caps his ceiling behind the lead back.",espn:148.0,hayden:148,breakout:false,bust:false,injury:""},
+{name:"Woody Marks",team:"HOU",pos:"RB",age:"23.5",ht:"5-10",wt:"213",forty:"4.51",pros:"Reliable receiving-down back who has earned an expanding role.",cons:"Early-down work still shared in a crowded backfield.",espn:149.0,hayden:149,breakout:false,bust:false,injury:""},
+{name:"Romeo Doubs",team:"NE",pos:"WR",age:"24.9",ht:"6-2",wt:"201",forty:"4.51",pros:"Reliable possession target with a track record of consistent targets.",cons:"Ceiling capped behind more explosive options in the pecking order.",espn:151.0,hayden:151,breakout:false,bust:false,injury:""},
+{name:"Jordan Mason",team:"MIN",pos:"RB",age:"24.5",ht:"5-11",wt:"223",forty:"4.52",pros:"Physical, between-the-tackles runner who has produced when given volume.",cons:"Committee role limits his weekly floor outside of an injury spike.",espn:152.0,hayden:152,breakout:false,bust:false,injury:""},
+{name:"Tyler Shough",team:"NO",pos:"QB",age:"26.7",ht:"6-5",wt:"219",forty:"4.75",pros:"Big-armed passer who has earned the starting job with real weapons around him.",cons:"Limited NFL track record creates real bust risk.",espn:154.0,hayden:154,breakout:false,bust:false,injury:""},
+{name:"Alvin Kamara",team:"NO",pos:"RB",age:"31.0",ht:"5-10",wt:"215",forty:"4.56",pros:"Elite receiving-back floor with a long track record of PPR production.",cons:"Age 31 with real touch-share decline risk as the season wears on.",espn:155.0,hayden:155,breakout:false,bust:false,injury:""},
+{name:"Isiah Pacheco",team:"DET",pos:"RB",age:"27.4",ht:"5-11",wt:"216",forty:"4.37",pros:"Physical, downhill runner with real early-down volume upside.",cons:"New offense and backfield mates create role uncertainty.",espn:156.0,hayden:156,breakout:false,bust:false,injury:""},
+{name:"Jordan Love",team:"GB",pos:"QB",age:"27.6",ht:"6-4",wt:"224",forty:"4.78",pros:"Big-armed passer with a full complement of weapons around him.",cons:"Turnover-prone tendencies have shown up in big spots.",espn:157.0,hayden:157,breakout:false,bust:false,injury:""},
+{name:"Daniel Jones",team:"IND",pos:"QB",age:"29.0",ht:"6-5",wt:"230",forty:"4.44",pros:"Real rushing floor gives him streaming QB1 weeks in the right matchup.",cons:"Accuracy and turnover concerns have followed him for years.",espn:158.0,hayden:158,breakout:false,bust:false,injury:""},
+{name:"Jayden Higgins",team:"HOU",pos:"WR",age:"23.2",ht:"6-4",wt:"214",forty:"4.47",pros:"Big-bodied rookie with real red-zone size and a growing role.",cons:"Rookie learning curve behind an established WR1.",espn:159.0,hayden:159,breakout:false,bust:false,injury:""},
+{name:"Jalen Coker",team:"CAR",pos:"WR",age:"23.6",ht:"6-2",wt:"208",forty:"4.57",pros:"Physical target who has flashed real red-zone ability.",cons:"Target competition in a crowded receiving corps caps his floor.",espn:161.0,hayden:161,breakout:false,bust:false,injury:""},
+{name:"Sam Darnold",team:"SEA",pos:"QB",age:"29.1",ht:"6-3",wt:"225",forty:"4.85",pros:"Coming off a career-best season with real weapons at his disposal.",cons:"Career-long inconsistency makes last year's leap hard to fully trust.",espn:163.0,hayden:163,breakout:false,bust:false,injury:""},
+{name:"Jerry Jeudy",team:"CLE",pos:"WR",age:"27.1",ht:"6-1",wt:"193",forty:"4.45",pros:"Big-play deep threat capable of standalone WR2 weeks.",cons:"Quarterback play has been a persistent drag on his target efficiency.",espn:164.0,hayden:164,breakout:false,bust:false,injury:""},
+{name:"Juwan Johnson",team:"NO",pos:"TE",age:"29.9",ht:"6-4",wt:"231",forty:"4.63",pros:"Reliable red-zone weapon with a track record of touchdown production.",cons:"Target share is inconsistent week to week outside the end zone.",espn:168.0,hayden:168,breakout:false,bust:false,injury:""},
+{name:"De'Zhaun Stribling",team:"SF",pos:"WR",age:"24.0",ht:"6-2",wt:"203",forty:"4.52",pros:"Developmental deep threat who has flashed in limited opportunity.",cons:"Buried on the depth chart behind established options.",espn:169.0,hayden:169,breakout:false,bust:false,injury:""},
+{name:"C.J. Stroud",team:"HOU",pos:"QB",age:"24.7",ht:"6-3",wt:"218",forty:"4.80",pros:"Elite arm talent with a full complement of weapons in a top offense.",cons:"Offensive line and coaching staff questions could suppress his floor.",espn:170.0,hayden:170,breakout:false,bust:false,injury:""},
+{name:"Terrance Ferguson",team:"LAR",pos:"TE",age:"23.0",ht:"6-5",wt:"247",forty:"4.63",pros:"Athletic rookie tight end stepping into real offensive opportunity.",cons:"Unproven NFL role and target share as a rookie.",espn:172.0,hayden:172,breakout:false,bust:false,injury:""},
+{name:"Fernando Mendoza",team:"LV",pos:"QB",age:"22.0",ht:"6-5",wt:"225",forty:"4.70",pros:"Big-armed rookie with real long-term starter traits.",cons:"First-year starter learning curve creates real bust risk.",espn:174.0,hayden:174,breakout:false,bust:false,injury:""},
+{name:"Denzel Boston",team:"CLE",pos:"WR",age:"23.0",ht:"6-4",wt:"205",forty:"4.51",pros:"Big-bodied rookie receiver with real contested-catch upside.",cons:"Unproven role behind more established pass-catchers.",espn:176.0,hayden:176,breakout:false,bust:false,injury:""},
+{name:"Tyrone Tracy Jr.",team:"NYG",pos:"RB",age:"25.5",ht:"5-11",wt:"210",forty:"4.45",pros:"Proven receiving-down back with real standalone flex appeal.",cons:"Committee role caps his week-to-week floor.",espn:177.0,hayden:177,breakout:false,bust:false,injury:""},
+{name:"Malik Willis",team:"MIA",pos:"QB",age:"27.1",ht:"6-1",wt:"219",forty:"4.51",pros:"Elite rushing tools give him a real streaming floor if he starts.",cons:"Passing accuracy remains a serious question mark.",espn:178.0,hayden:178,breakout:false,bust:false,injury:""},
+{name:"Tyjae Spears",team:"TEN",pos:"RB",age:"23.9",ht:"5-10",wt:"201",forty:"4.32",pros:"Explosive receiving-down back with real home-run ability.",cons:"Committee role and offensive line questions cap his floor.",espn:179.0,hayden:179,breakout:false,bust:false,injury:""},
+{name:"Chris Rodriguez",team:"JAX",pos:"RB",age:"25.4",ht:"6-0",wt:"220",forty:"4.53",pros:"Physical downhill runner who has flashed in limited opportunity.",cons:"Committee role behind more established backs.",espn:181.0,hayden:181,breakout:false,bust:false,injury:""},
+{name:"Calvin Ridley",team:"TEN",pos:"WR",age:"31.0",ht:"6-1",wt:"190",forty:"4.36",pros:"Proven big-play deep threat with a long track record of targets.",cons:"Age 31 and quarterback play create real week-to-week volatility.",espn:183.0,hayden:183,breakout:false,bust:false,injury:""},
+{name:"Jaylin Lane",team:"BAL",pos:"WR",age:"23.6",ht:"5-11",wt:"190",forty:"4.34",pros:"Explosive rookie with legitimate deep-speed and return upside.",cons:"Unproven role in a crowded, established receiving corps.",espn:184.0,hayden:184,breakout:false,bust:false,injury:""},
+{name:"Jalen McMillan",team:"TB",pos:"WR",age:"23.6",ht:"6-0",wt:"197",forty:"4.48",pros:"Reliable possession target who has flashed real red-zone chops.",cons:"Target competition behind more established options caps his ceiling.",espn:185.0,hayden:185,breakout:false,bust:false,injury:""},
+{name:"Dalton Schultz",team:"HOU",pos:"TE",age:"30.0",ht:"6-5",wt:"244",forty:"4.75",pros:"Reliable red-zone target with a long track record of touchdown production.",cons:"Age 30 with a modest overall target share.",espn:186.0,hayden:186,breakout:false,bust:false,injury:""},
+{name:"Brenton Strange",team:"JAX",pos:"TE",age:"24.7",ht:"6-3",wt:"253",forty:"4.70",pros:"Developing pass-catcher with real red-zone size.",cons:"Target share remains inconsistent behind the WR corps.",espn:187.0,hayden:187,breakout:false,bust:false,injury:""},
+{name:"Tank Bigsby",team:"PHI",pos:"RB",age:"23.8",ht:"6-0",wt:"215",forty:"4.56",pros:"Physical downhill runner with real red-zone upside.",cons:"Committee role behind the lead back caps his floor.",espn:188.0,hayden:188,breakout:false,bust:false,injury:""},
+{name:"Cameron Ward",team:"TEN",pos:"QB",age:"24.2",ht:"6-2",wt:"223",forty:"4.60",pros:"Big-armed rookie starter with real long-term upside.",cons:"First-year starter learning curve creates real bust risk.",espn:190.0,hayden:190,breakout:false,bust:false,injury:""},
+{name:"Tre Tucker",team:"LV",pos:"WR",age:"24.9",ht:"5-10",wt:"191",forty:"4.24",pros:"Elite deep speed gives him standalone big-play upside.",cons:"Limited target share caps his weekly floor.",espn:191.0,hayden:191,breakout:false,bust:false,injury:""},
+{name:"Bryce Young",team:"CAR",pos:"QB",age:"24.8",ht:"5-10",wt:"204",forty:"4.59",pros:"Improved considerably with real weapons now around him.",cons:"Undersized frame and offensive line questions remain real risks.",espn:194.0,hayden:194,breakout:false,bust:false,injury:""},
+{name:"Pat Freiermuth",team:"PIT",pos:"TE",age:"27.4",ht:"6-5",wt:"258",forty:"4.87",pros:"Reliable red-zone target with a long track record of touchdown production.",cons:"Target share is inconsistent outside the end zone.",espn:197.0,hayden:197,breakout:false,bust:false,injury:""},
+{name:"Nathaniel Dell",team:"HOU",pos:"WR",age:"27.0",ht:"5-8",wt:"165",forty:"4.46",pros:"Reliable slot target with a track record of real target share.",cons:"Small frame and target competition cap his weekly ceiling.",espn:199.0,hayden:199,breakout:false,bust:false,injury:""},
+{name:"Cooper Kupp",team:"SEA",pos:"WR",age:"33.1",ht:"6-2",wt:"198",forty:"4.62",pros:"Proven elite route-runner capable of spike weeks when healthy.",cons:"Age 33 with an extensive recent injury history.",espn:200.0,hayden:200,breakout:false,bust:false,injury:""},
+{name:"AJ Barner",team:"SEA",pos:"TE",age:"24.0",ht:"6-6",wt:"251",forty:"4.71",pros:"Developing pass-catcher with real red-zone size.",cons:"Target share remains inconsistent behind the WR corps.",espn:201.0,hayden:201,breakout:false,bust:false,injury:""},
+{name:"Aaron Rodgers",team:"PIT",pos:"QB",age:"42.6",ht:"6-2",wt:"223",forty:"4.71",pros:"Future Hall-of-Famer still capable of efficient, high-IQ football.",cons:"Age 42 with a clear decline in arm strength and mobility.",espn:203.0,hayden:203,breakout:false,bust:false,injury:""},
+{name:"Odell Beckham Jr.",team:"NYG",pos:"WR",age:"33.7",ht:"6-0",wt:"198",forty:"4.43",pros:"Big-name veteran capable of a spike week if given volume.",cons:"Age 33 with a long injury history and a diminished target role.",espn:205.0,hayden:205,breakout:false,bust:false,injury:""},
+{name:"Tyler Allgeier",team:"ARI",pos:"RB",age:"25.4",ht:"5-11",wt:"224",forty:"4.60",pros:"Physical, goal-line-capable back with real touchdown equity.",cons:"Committee role behind the lead back caps his floor.",espn:207.0,hayden:207,breakout:false,bust:false,injury:""},
+{name:"Darnell Washington",team:"PIT",pos:"TE",age:"23.4",ht:"6-7",wt:"264",forty:"4.64",pros:"Elite blocking tight end with real red-zone size when targeted.",cons:"Route tree and target share remain limited.",espn:209.0,hayden:209,breakout:false,bust:false,injury:""},
+{name:"Chigoziem Okonkwo",team:"WAS",pos:"TE",age:"25.6",ht:"6-3",wt:"238",forty:"4.49",pros:"Athletic mismatch weapon capable of big plays after the catch.",cons:"Target share is inconsistent week to week.",espn:212.0,hayden:212,breakout:false,bust:false,injury:""},
+{name:"Shedeur Sanders",team:"CLE",pos:"QB",age:"24.4",ht:"6-1",wt:"215",forty:"4.75",pros:"Accurate, pro-ready passer who has earned an expanded role.",cons:"Limited NFL track record creates real bust risk.",espn:213.0,hayden:213,breakout:false,bust:false,injury:""},
+{name:"Chris Allen",team:"KC",pos:"WR",age:"24.0",ht:"6-0",wt:"195",forty:"4.55",pros:"Camp standout who has earned a look for real snaps.",cons:"Unproven at the NFL level with a crowded depth chart ahead of him.",espn:221.0,hayden:221,breakout:false,bust:false,injury:""},
+{name:"David Njoku",team:"LAC",pos:"TE",age:"30.0",ht:"6-4",wt:"246",forty:"4.64",pros:"Athletic mismatch weapon with a track record of big plays.",cons:"Target share is inconsistent in a run-oriented offense.",espn:223.0,hayden:223,breakout:false,bust:false,injury:""},
+{name:"Cole Kmet",team:"CHI",pos:"TE",age:"27.4",ht:"6-6",wt:"262",forty:"4.70",pros:"Reliable red-zone target in an ascending offense.",cons:"Target share remains inconsistent outside the end zone.",espn:225.0,hayden:225,breakout:false,bust:false,injury:""},
+{name:"Carson Beck",team:"ARI",pos:"QB",age:"23.7",ht:"6-4",wt:"220",forty:"4.68",pros:"Big-armed rookie with real long-term starter traits.",cons:"Unproven NFL role behind the incumbent starter.",espn:227.0,hayden:227,breakout:false,bust:false,injury:""},
+{name:"Dawson Knox",team:"BUF",pos:"TE",age:"29.9",ht:"6-4",wt:"254",forty:"4.65",pros:"Reliable red-zone target in a high-powered offense.",cons:"Target share is inconsistent outside the end zone.",espn:232.0,hayden:232,breakout:false,bust:false,injury:""},
+{name:"Tyreek Hill",team:"FA",pos:"WR",age:"32.4",ht:"5-10",wt:"191",forty:"4.29",pros:"Elite deep speed still capable of a spike week if he lands the right situation.",cons:"Unsigned and without a clear role; pure speculative stash.",espn:237.0,hayden:237,breakout:false,bust:false,injury:""},
+{name:"Adonai Mitchell",team:"NYJ",pos:"WR",age:"23.6",ht:"6-2",wt:"205",forty:"4.34",pros:"Elite deep speed with real big-play upside if targets increase.",cons:"Unproven role behind more established options.",espn:239.0,hayden:239,breakout:false,bust:false,injury:""},
+{name:"Tyler Higbee",team:"LAR",pos:"TE",age:"33.2",ht:"6-6",wt:"255",forty:"4.76",pros:"Reliable blocking tight end who still commands red-zone targets.",cons:"Age 33 with a diminished route-running role.",espn:241.0,hayden:241,breakout:false,bust:false,injury:""},
+{name:"Elijah Arroyo",team:"SEA",pos:"TE",age:"23.1",ht:"6-5",wt:"250",forty:"4.68",pros:"Athletic rookie tight end with real long-term upside.",cons:"Unproven role as a rookie behind the depth chart.",espn:246.0,hayden:246,breakout:false,bust:false,injury:""},
+{name:"KaVontae Turpin",team:"DAL",pos:"WR",age:"29.9",ht:"5-9",wt:"155",forty:"4.36",pros:"Explosive return specialist with real standalone big-play upside.",cons:"Small frame and limited offensive role cap his weekly floor.",espn:247.0,hayden:247,breakout:false,bust:false,injury:""},
+{name:"JuJu Smith-Schuster",team:"NYG",pos:"WR",age:"29.9",ht:"6-1",wt:"215",forty:"4.54",pros:"Veteran possession receiver capable of real target volume if featured.",cons:"Explosiveness has declined; ceiling is capped as a complementary piece.",espn:248.0,hayden:248,breakout:false,bust:false,injury:""},
+{name:"Keenan Allen",team:"FA",pos:"WR",age:"34.3",ht:"6-2",wt:"211",forty:"4.71",pros:"Proven route-runner capable of real target volume if he signs.",cons:"Unsigned entering his mid-30s; pure speculative stash.",espn:249.0,hayden:249,breakout:false,bust:false,injury:""},
+{name:"Eli Stowers",team:"PHI",pos:"TE",age:"23.0",ht:"6-4",wt:"239",forty:"4.65",pros:"Athletic rookie tight end with real receiving upside.",cons:"Unproven role as a rookie behind the depth chart.",espn:255.0,hayden:255,breakout:false,bust:false,injury:""},
+{name:"Noah Gray",team:"KC",pos:"TE",age:"26.6",ht:"6-4",wt:"240",forty:"4.68",pros:"Reliable underneath target in a high-powered passing offense.",cons:"Target share is capped behind other pass-catching options.",espn:258.0,hayden:258,breakout:false,bust:false,injury:""},
+{name:"Luke McCaffrey",team:"WAS",pos:"WR",age:"24.9",ht:"6-0",wt:"192",forty:"4.46",pros:"Versatile gadget-piece with real standalone big-play upside.",cons:"Limited defined role caps his weekly floor.",espn:260.0,hayden:260,breakout:false,bust:false,injury:""},
+{name:"Malachi Fields",team:"NYG",pos:"WR",age:"22.5",ht:"6-3",wt:"220",forty:"4.55",pros:"Big-bodied developmental target with real contested-catch upside.",cons:"Unproven role behind an established receiving corps.",espn:264.0,hayden:264,breakout:false,bust:false,injury:""},
+{name:"Nick Chubb",team:"FA",pos:"RB",age:"30.6",ht:"5-11",wt:"227",forty:"4.52",pros:"Proven downhill runner capable of real volume if he signs.",cons:"Unsigned and coming off significant injury history.",espn:265.0,hayden:265,breakout:false,bust:false,injury:""},
+{name:"Kyle Juszczyk",team:"SF",pos:"RB",age:"35.0",ht:"6-1",wt:"235",forty:"4.78",pros:"Versatile receiving fullback with a real role in the passing game.",cons:"Touch volume is inherently capped by his role.",espn:266.0,hayden:266,breakout:false,bust:false,injury:""},
+{name:"Oronde Gadsden II",team:"LAC",pos:"TE",age:"23.2",ht:"6-4",wt:"220",forty:"4.68",pros:"Athletic rookie tight end with real big-play upside.",cons:"Unproven role as a rookie behind the depth chart.",espn:267.0,hayden:267,breakout:false,bust:false,injury:""},
+{name:"Ezekiel Elliott",team:"FA",pos:"RB",age:"31.1",ht:"6-0",wt:"228",forty:"4.47",pros:"Veteran short-yardage back capable of a real role if he signs.",cons:"Unsigned and clearly past his explosive-athlete peak.",espn:268.0,hayden:268,breakout:false,bust:false,injury:""},
+{name:"Kirk Cousins",team:"LV",pos:"QB",age:"38.1",ht:"6-3",wt:"202",forty:"4.95",pros:"Proven, high-volume passer with a full receiving corps around him.",cons:"Age 38 with declining arm strength and mobility.",espn:270.0,hayden:270,breakout:false,bust:false,injury:""},
+{name:"Simeon Bell",team:"BUF",pos:"WR",age:"23.0",ht:"6-1",wt:"200",forty:"4.55",pros:"Camp standout who has earned a longer look for real snaps.",cons:"Unproven at the NFL level with a crowded depth chart ahead of him.",espn:274.0,hayden:274,breakout:false,bust:false,injury:""},
+{name:"Roman Wilson",team:"PIT",pos:"WR",age:"24.7",ht:"5-11",wt:"185",forty:"4.39",pros:"Explosive deep threat with real big-play upside when targeted.",cons:"Injury history and target competition cap his weekly floor.",espn:275.0,hayden:275,breakout:false,bust:false,injury:""},
+{name:"Kalif Raymond",team:"CHI",pos:"WR",age:"30.9",ht:"5-9",wt:"172",forty:"4.43",pros:"Reliable deep threat with real standalone big-play upside.",cons:"Small frame and limited target share cap his weekly floor.",espn:278.0,hayden:278,breakout:false,bust:false,injury:""},
+{name:"Isaiah Bond",team:"CLE",pos:"WR",age:"22.0",ht:"5-11",wt:"180",forty:"4.29",pros:"Elite deep speed with real big-play upside as he develops.",cons:"Rookie learning curve behind an established receiving corps.",espn:280.0,hayden:280,breakout:false,bust:false,injury:""},
+{name:"Dylan McBride",team:"FA",pos:"RB",age:"23.5",ht:"5-10",wt:"205",forty:"4.55",pros:"Camp standout who has earned a longer look for real touches.",cons:"Unsigned and unproven at the NFL level.",espn:289.0,hayden:289,breakout:false,bust:false,injury:""},
+{name:"Javon Walker",team:"CHI",pos:"WR",age:"23.0",ht:"6-1",wt:"205",forty:"4.50",pros:"Camp standout who has earned a longer look for real snaps.",cons:"Unproven at the NFL level with a crowded depth chart ahead of him.",espn:293.0,hayden:293,breakout:false,bust:false,injury:""},
 ];
 
 // ══════════════════════════════════════════════
@@ -614,6 +730,8 @@ function startSync() {
       boardData = data;
       renderBoard();
       renderMyBoard();
+      renderBustList();
+      renderInjuryList();
     }
   });
 
@@ -729,6 +847,7 @@ function toggleFlag(idx, type) {
   boardData[idx][type] = !boardData[idx][type];
   renderBoard();
   renderMyBoard();
+  renderBustList();
   syncToFirebase();
 }
 
@@ -739,6 +858,7 @@ function toggleInjury(idx) {
     boardData[idx].injury = 'Add note…';
   }
   renderBoard();
+  renderInjuryList();
   syncToFirebase();
   if (boardData[idx].injury) {
     setTimeout(() => {
@@ -801,6 +921,8 @@ function resetBoard() {
   boardData = JSON.parse(JSON.stringify(defaultPlayers));
   renderBoard();
   renderMyBoard();
+  renderBustList();
+  renderInjuryList();
   syncToFirebase();
 }
 
@@ -844,6 +966,8 @@ function switchTab(tab) {
   document.getElementById('panel-' + tab).classList.add('active');
   document.querySelector(`.tab-btn[onclick*="${tab}"]`).classList.add('active');
   if (tab === 'myboard') renderMyBoard();
+  if (tab === 'bustlist') renderBustList();
+  if (tab === 'injurylist') renderInjuryList();
 }
 
 function renderMyBoard() {
@@ -923,9 +1047,129 @@ function removeFromMyBoard(idx) {
   syncToFirebase();
 }
 
+function renderBustList() {
+  const busts = boardData.filter(p => p.bust);
+  document.getElementById('bustListCount').textContent = busts.length;
+  const container = document.getElementById('bustListContent');
+
+  if (busts.length === 0) {
+    container.innerHTML = `
+      <div class="my-board-empty">
+        <span class="big-icon">💣</span>
+        <strong>No bust flags yet.</strong><br>
+        Go to the Research Board and click the 💣 bomb on players you want to avoid.<br>
+        They'll show up here.
+      </div>`;
+    return;
+  }
+
+  let html = `<table>
+    <thead><tr>
+      <th style="width:36px">Rk</th>
+      <th>Player</th>
+      <th>Team</th>
+      <th>Pos</th>
+      <th>Age</th>
+      <th>ESPN ADP (PPR)</th>
+      <th>Hayden Rk</th>
+      <th>Vegas Tm</th>
+      <th>Why Bust <span class="source-tag">(Hayden/Josh)</span></th>
+      <th style="width:60px"></th>
+    </tr></thead><tbody>`;
+
+  busts.forEach(p => {
+    const origIdx = boardData.indexOf(p);
+    const vr = vegasRank[p.team] || '—';
+    const vrClass = typeof vr === 'number' ? getVegasClass(vr) : '';
+    html += `<tr>
+      <td class="rank-cell">${origIdx + 1}</td>
+      <td class="player-name">${p.name}</td>
+      <td>${p.team}</td>
+      <td><span class="pos-badge pos-${p.pos}">${p.pos}</span></td>
+      <td>${p.age}</td>
+      <td>${p.espn}</td>
+      <td>${p.hayden}</td>
+      <td class="vegas-rank ${vrClass}">${typeof vr === 'number' ? vr + '/32' : vr}</td>
+      <td class="cons-cell" style="font-size:11px;max-width:300px;white-space:normal;">${p.cons}</td>
+      <td><button class="remove-btn" onclick="removeBust(${origIdx})" title="Remove">✕</button></td>
+    </tr>`;
+  });
+
+  html += '</tbody></table>';
+  container.innerHTML = html;
+}
+
+function removeBust(idx) {
+  boardData[idx].bust = false;
+  renderBoard();
+  renderBustList();
+  syncToFirebase();
+}
+
+function renderInjuryList() {
+  const injured = boardData.filter(p => p.injury);
+  document.getElementById('injuryListCount').textContent = injured.length;
+  const container = document.getElementById('injuryListContent');
+
+  if (injured.length === 0) {
+    container.innerHTML = `
+      <div class="my-board-empty">
+        <span class="big-icon">🏥</span>
+        <strong>No injury flags yet.</strong><br>
+        Go to the Research Board and click the 🏥 on players with injury concerns.<br>
+        They'll show up here.
+      </div>`;
+    return;
+  }
+
+  let html = `<table>
+    <thead><tr>
+      <th style="width:36px">Rk</th>
+      <th>Player</th>
+      <th>Team</th>
+      <th>Pos</th>
+      <th>Age</th>
+      <th>ESPN ADP (PPR)</th>
+      <th>Hayden Rk</th>
+      <th>Vegas Tm</th>
+      <th>Injury Notes</th>
+      <th style="width:60px"></th>
+    </tr></thead><tbody>`;
+
+  injured.forEach(p => {
+    const origIdx = boardData.indexOf(p);
+    const vr = vegasRank[p.team] || '—';
+    const vrClass = typeof vr === 'number' ? getVegasClass(vr) : '';
+    html += `<tr>
+      <td class="rank-cell">${origIdx + 1}</td>
+      <td class="player-name">${p.name}</td>
+      <td>${p.team}</td>
+      <td><span class="pos-badge pos-${p.pos}">${p.pos}</span></td>
+      <td>${p.age}</td>
+      <td>${p.espn}</td>
+      <td>${p.hayden}</td>
+      <td class="vegas-rank ${vrClass}">${typeof vr === 'number' ? vr + '/32' : vr}</td>
+      <td class="injury-notes-cell" contenteditable="true" onblur="updateInjuryNote(${origIdx},this.textContent)">${p.injury}</td>
+      <td><button class="remove-btn" onclick="removeInjury(${origIdx})" title="Clear">✕</button></td>
+    </tr>`;
+  });
+
+  html += '</tbody></table>';
+  container.innerHTML = html;
+}
+
+function removeInjury(idx) {
+  boardData[idx].injury = '';
+  renderBoard();
+  renderInjuryList();
+  syncToFirebase();
+}
+
 // Initial render (for non-Firebase / offline use)
 renderBoard();
 renderMyBoard();
+renderBustList();
+renderInjuryList();
 </script>
 </body>
 </html>
